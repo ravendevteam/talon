@@ -5,3 +5,4 @@ nuitka>=2.0.0
 pywin32>=305
 setuptools>=68.0.0
 wheel>=0.41.0
+tqdm>=4.66.0
