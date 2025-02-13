@@ -4,6 +4,9 @@ import ctypes
 import subprocess
 import threading
 import logging
+import platform
+import subprocess
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QApplication
 from browser_select_screen import BrowserSelectScreen
 from defender_check import DefenderCheck
@@ -13,6 +16,7 @@ import debloat_windows
 import raven_software_install
 import browser_install
 import time
+import datetime
 from PyQt5.QtCore import QTimer
 
 LOG_FILE = "talon.txt"
@@ -39,9 +43,52 @@ def restart_as_admin():
     except Exception as e:
         logging.error(f"Error restarting as admin: {e}")
 
+
+def check_windows_version_and_install_date():
+    try:
+        # Get Windows version
+        windows_version = platform.version()
+        logging.info(f"Windows version: {windows_version}")
+
+        # Get Windows installation date
+        result = subprocess.run(["systeminfo"], capture_output=True, text=True, check=True)
+        for line in result.stdout.splitlines():
+            if "Original Install Date" in line:
+                install_date_str = line.split(":")[1].strip()
+                logging.info(f"Windows installation date: {install_date_str}")
+                break
+        else:
+            logging.warning("Could not determine Windows installation date.")
+            install_date_str = None
+
+        if install_date_str:
+            # Parse the installation date
+            install_date = datetime.datetime.strptime(install_date_str, "%m/%d/%Y, %I:%M:%S %p")
+            current_date = datetime.datetime.now()
+
+            # Calculate the difference in days
+            days_difference = (current_date - install_date).days
+            logging.info(f"Days since Windows installation: {days_difference}")
+
+            # Show warning popup if necessary
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText(f"Windows version: {windows_version}\nInstallation date: {install_date_str}\nDays since installation: {days_difference}")
+            msg.setWindowTitle("Windows Information")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+
+    except Exception as e:
+        logging.error(f"Error checking Windows version and installation date: {e}")
+
+
 def main():
     logging.info("Starting Talon Installer")
     app = QApplication(sys.argv)
+
+    #This is the function call to double check that the user recently installed a fresh copy of windows.
+    #Even though the README says that you need to, plenty of people are not doing it. This could help prevent some of the confusion on the user's part.
+    check_windows_version_and_install_date()
 
     if not is_running_as_admin():
         logging.warning("Program is not running as admin. Restarting with admin rights...")
