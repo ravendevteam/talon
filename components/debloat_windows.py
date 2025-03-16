@@ -270,7 +270,7 @@ def run_winconfig():
             f"-DisableBing -DisableSuggestions -DisableLockscreenTips -RevertContextMenu "
             f"-TaskbarAlignLeft -HideSearchTb -DisableWidgets -DisableCopilot -ExplorerToThisPC"
             f"-ClearStartAllUsers -DisableDVR -DisableStartRecommended -ExplorerToThisPC"
-            f"-DisableMouseAcceleration"
+            f"-DisableMouseAcceleration -ClearStartAllUsers"
         )
         log(f"Executing PowerShell command with parameters:")
         log(f"Command: {powershell_command}")
