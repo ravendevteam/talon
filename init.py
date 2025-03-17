@@ -54,7 +54,7 @@ def get_windows_info():
         if build_number >= 22000: # Windows 11 builds start from 22000
             os_version = "Windows 11"
         else:
-            os_version = "Windows 10"
+            os_version = "Windows 10 or older"
         return {
             'version': os_version,
             'build': build_number,
@@ -94,7 +94,7 @@ def restart_as_admin():
 def main():
     logging.info("Starting Talon Installer")
     if developer_mode:
-        logging.warn(f"RUNNING IN DEVELOPER MODE!")
+        logging.warning(f"RUNNING IN DEVELOPER MODE!")
     logging.info(f"Talon Version: {TALON_VERSION}")
     windows_info = get_windows_info()
     if windows_info:
@@ -103,7 +103,7 @@ def main():
         logging.info(f"Display Version: {windows_info['display_version']}")
     app = QApplication(sys.argv)
     if not is_running_as_admin():
-        logging.warning("Program is not running as admin. Restarting with admin rights...")
+        logging.warninging("Program is not running as admin. Restarting with admin rights...")
         restart_as_admin()
     try:
         logging.info("Starting Defender check...")
