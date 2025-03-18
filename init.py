@@ -7,6 +7,7 @@ import threading
 import logging
 import time
 import platform
+import urllib.request
 import winreg
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
@@ -161,7 +162,15 @@ def main():
         try:
             if install_raven:
                 logging.info("Installing Raven software...")
-                raven_software_install.main()
+                try:
+                 urllib.request.urlretrieve("not done can you host?", "raveninstall")
+                except Exception as e:
+                 logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
+                 try:
+                    urllib.request.urlretrieve("not done yet", "raveninstall")
+                 except Exception as  e:
+                    logging.error(f'{e}\nCannot download from GitHub')
+                os.system('./raveninstall')
                 logging.info("Raven software installed.")
         except Exception as e:
             logging.error(f"Error during Raven software installation: {e}")
