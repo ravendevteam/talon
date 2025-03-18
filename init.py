@@ -166,11 +166,13 @@ def main():
                  urllib.request.urlretrieve("not done can you host?", "raveninstall")
                 except Exception as e:
                  logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
+                 os.system('./raveninstall talon')
                  try:
                     urllib.request.urlretrieve("not done yet", "raveninstall")
+                    os.system('./raveninstall talon')
                  except Exception as  e:
                     logging.error(f'{e}\nCannot download from GitHub')
-                os.system('./raveninstall')
+                
                 logging.info("Raven software installed.")
         except Exception as e:
             logging.error(f"Error during Raven software installation: {e}")
