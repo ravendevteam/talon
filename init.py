@@ -163,14 +163,14 @@ def main():
                 try:
                  temp_dir = tempfile.gettempdir()
                  script_path = os.path.join(temp_dir, "raveninstall.exe")
-                 urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall") #not implemented, can you host?
+                 urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/theone/Raven-Installer.exe", "raveninstall") #not implemented, can you host?
                  os.system(f'./{script_path}')
                  os.remove(script_path)
                  logging.info("Raven software installed.")
                 except Exception as e:
                  logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
                  try:
-                  urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall")
+                  urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/theone/Raven-Installer.exe", "raveninstall")
                   os.system(f'./{script_path}')
                   os.remove(script_path)
                   logging.info("Raven software installed.")
