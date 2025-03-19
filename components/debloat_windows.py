@@ -87,42 +87,47 @@ def apply_registry_changes():
 def run_edge_vanisher():
     log("Starting Edge Vanisher script execution...")
     try:
-        script_url = "https://code.ravendevteam.org/talon/edge_vanisher.ps1"
-        temp_dir = tempfile.gettempdir()
-        script_path = os.path.join(temp_dir, "edge_vanisher.ps1")
-        log(f"Attempting to download Edge Vanisher script from: {script_url}")
-        log(f"Target script path: {script_path}")
+        def main(script_url="https://code.ravendevteam.org/talon/edge_vanisher.ps1"):
+         temp_dir = tempfile.gettempdir()
+         script_path = os.path.join(temp_dir, "edge_vanisher.ps1")
+         log(f"Attempting to download Edge Vanisher script from: {script_url}")
+         log(f"Target script path: {script_path}")
         
-        response = requests.get(script_url)
-        log(f"Download response status code: {response.status_code}")
+         response = requests.get(script_url)
+         log(f"Download response status code: {response.status_code}")
         
-        with open(script_path, "wb") as file:
+         with open(script_path, "wb") as file:
             file.write(response.content)
-        log("Edge Vanisher script successfully saved to disk")
+         log("Edge Vanisher script successfully saved to disk")
         
-        powershell_command = (
+         powershell_command = (
             f"Set-ExecutionPolicy Bypass -Scope Process -Force; "
             f"& '{script_path}'; exit" 
-        )
-        log(f"Executing PowerShell command: {powershell_command}")
+         )
+         log(f"Executing PowerShell command: {powershell_command}")
         
-        process = subprocess.run(
+         process = subprocess.run(
             ["powershell", "-Command", powershell_command],
             capture_output=True,
             text=True
-        )
+         )
         
-        if process.returncode == 0:
+         if process.returncode == 0:
             log("Edge Vanisher execution completed successfully")
             log(f"Process output: {process.stdout}")
             run_oouninstall()
-        else:
+         else:
             log(f"Edge Vanisher execution failed with return code: {process.returncode}")
             log(f"Process error: {process.stderr}")
             run_oouninstall()
-            
+        main()    
     except requests.exceptions.RequestException as e:
         log(f"Network error during Edge Vanisher script download: {str(e)}")
+        log('Trying GitHub')
+        try:
+         main('https://code.ravendevteam.org/talon/edge_vanisher.ps1') #not done
+        except Exception as e:
+            log(e+'\ncannot install Edge Vanisher script')
         run_oouninstall()
     except IOError as e:
         log(f"File I/O error while saving Edge Vanisher script: {str(e)}")
@@ -137,37 +142,49 @@ def run_edge_vanisher():
 def run_oouninstall():
     log("Starting Office Online uninstallation process...")
     try:
-        script_url = "https://code.ravendevteam.org/talon/uninstall_oo.ps1"
-        temp_dir = tempfile.gettempdir()
-        script_path = os.path.join(temp_dir, "uninstall_oo.ps1")
-        log(f"Attempting to download OO uninstall script from: {script_url}")
-        log(f"Target script path: {script_path}")
+        def main(script_url="https://code.ravendevteam.org/talon/uninstall_oo.ps1"):
+         temp_dir = tempfile.gettempdir()
+         script_path = os.path.join(temp_dir, "uninstall_oo.ps1")
+         log(f"Attempting to download OO uninstall script from: {script_url}")
+         log(f"Target script path: {script_path}")
         
-        response = requests.get(script_url)
-        log(f"Download response status code: {response.status_code}")
+         response = requests.get(script_url)
+         log(f"Download response status code: {response.status_code}")
         
-        with open(script_path, "wb") as file:
+         with open(script_path, "wb") as file:
             file.write(response.content)
-        log("OO uninstall script successfully saved to disk")
+         log("OO uninstall script successfully saved to disk")
         
-        powershell_command = f"Set-ExecutionPolicy Bypass -Scope Process -Force; & '{script_path}'"
-        log(f"Executing PowerShell command: {powershell_command}")
+         powershell_command = f"Set-ExecutionPolicy Bypass -Scope Process -Force; & '{script_path}'"
+         log(f"Executing PowerShell command: {powershell_command}")
         
-        process = subprocess.run(
+         process = subprocess.run(
             ["powershell", "-Command", powershell_command],
             capture_output=True,
             text=True
-        )
+         )
         
-        if process.returncode == 0:
+         if process.returncode == 0:
             log("Office Online uninstallation completed successfully")
             log(f"Process stdout: {process.stdout}")
             run_tweaks()
-        else:
+         else:
             log(f"Office Online uninstallation failed with return code: {process.returncode}")
             log(f"Process stderr: {process.stderr}")
             log(f"Process stdout: {process.stdout}")
             run_tweaks()
+        main()
+    except requests.exceptions.RequestException as e:
+        log(f"Network error during OO uninstallation script download: {str(e)}")
+        log('Trying GitHub')
+        try:
+         main('https://code.ravendevteam.org/talon/uninstall_oo.ps1') #not done
+        except Exception as e:
+            log(e+'\ncannot install OO uninstallationr script')
+        run_oouninstall()
+    except IOError as e:
+        log(f"File I/O error while saving OO uninstallation script: {str(e)}")
+        run_oouninstall()
             
     except Exception as e:
         log(f"Unexpected error during OO uninstallation: {str(e)}")
@@ -337,13 +354,13 @@ def run_updatepolicychanger():
     log("Starting UpdatePolicyChanger script execution...")
     log("Checking system state before UpdatePolicyChanger execution...")
     try:
-        script_url = "https://code.ravendevteam.org/talon/update_policy_changer.ps1"
-        temp_dir = tempfile.gettempdir()
-        script_path = os.path.join(temp_dir, "UpdatePolicyChanger.ps1")
-        log(f"Attempting to download UpdatePolicyChanger script from: {script_url}")
-        log(f"Target script path: {script_path}")
+        def main(script_url="https://code.ravendevteam.org/talon/update_policy_changer.ps1"):
+         temp_dir = tempfile.gettempdir()
+         script_path = os.path.join(temp_dir, "UpdatePolicyChanger.ps1")
+         log(f"Attempting to download UpdatePolicyChanger script from: {script_url}")
+         log(f"Target script path: {script_path}")
         
-        try:
+         try:
             response = requests.get(script_url)
             log(f"Download response status code: {response.status_code}")
             log(f"Response headers: {response.headers}")
@@ -366,18 +383,22 @@ def run_updatepolicychanger():
             file_size = os.path.getsize(script_path)
             log(f"Saved file size: {file_size} bytes")
             
-        except requests.exceptions.RequestException as e:
+         except requests.exceptions.RequestException as e:
             log(f"Network error during script download: {e}")
+            log('Trying GitHub')
+            try: main('https://code.ravendevteam.org/talon/update_policy_changer.ps1')#not done
+            except Exception as e: log(e+'\ncannot download updatepolicychanger')
+            
             raise
         
-        log("Preparing PowerShell command execution...")
-        powershell_command = (
+         log("Preparing PowerShell command execution...")
+         powershell_command = (
             f"Set-ExecutionPolicy Bypass -Scope Process -Force; "
             f"& '{script_path}'; exit" 
-        )
-        log(f"PowerShell command prepared: {powershell_command}")
+         )
+         log(f"PowerShell command prepared: {powershell_command}")
         
-        try:
+         try:
             log("Executing PowerShell command...")
             process = subprocess.run(
                 ["powershell", "-Command", powershell_command],
@@ -403,10 +424,10 @@ def run_updatepolicychanger():
                 log("Proceeding with finalization despite failure...")
                 finalize_installation()
                 
-        except subprocess.TimeoutExpired:
+         except subprocess.TimeoutExpired:
             log("PowerShell command execution timed out after 5 minutes")
             finalize_installation()
-        except subprocess.SubprocessError as e:
+         except subprocess.SubprocessError as e:
             log(f"Error executing PowerShell command: {e}")
             finalize_installation()
             
