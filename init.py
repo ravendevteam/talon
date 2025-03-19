@@ -164,10 +164,10 @@ def main():
                 logging.info("Installing Raven software...")
                 try:
                  urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall") #not implemented, can you host?
-                except Exception as e:
-                 logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
                  os.system('./raveninstall.exe')
                  os.remove('raveninstall.exe')
+                except Exception as e:
+                 logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
                  try:
                   urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall")
                   os.system('./raveninstall.exe')
