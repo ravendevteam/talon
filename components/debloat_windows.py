@@ -123,7 +123,7 @@ def run_edge_vanisher():
         main()    
     except requests.exceptions.RequestException as e:
         log(f"Network error during Edge Vanisher script download: {str(e)}")
-        log('Trying GitHub')
+        log('Trying Backup')
         try:
          main('https://code.ravendevteam.org/talon/edge_vanisher.ps1') #not done
         except Exception as e:
@@ -176,7 +176,7 @@ def run_oouninstall():
         main()
     except requests.exceptions.RequestException as e:
         log(f"Network error during OO uninstallation script download: {str(e)}")
-        log('Trying GitHub')
+        log('Trying Backup')
         try:
          main('https://code.ravendevteam.org/talon/uninstall_oo.ps1') #not done
         except Exception as e:
@@ -385,7 +385,7 @@ def run_updatepolicychanger():
             
          except requests.exceptions.RequestException as e:
             log(f"Network error during script download: {e}")
-            log('Trying GitHub')
+            log('Trying Backup')
             try: main('https://code.ravendevteam.org/talon/update_policy_changer.ps1')#not done
             except Exception as e: log(e+'\ncannot download updatepolicychanger')
             

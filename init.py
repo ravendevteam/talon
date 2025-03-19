@@ -3,6 +3,7 @@ import sys
 import os
 import ctypes
 import threading
+import tempfile
 import logging
 import time
 import urllib.request
@@ -160,19 +161,22 @@ def main():
             if install_raven:
                 logging.info("Installing Raven software...")
                 try:
+                 temp_dir = tempfile.gettempdir()
+                 script_path = os.path.join(temp_dir, "raveninstall.exe")
                  urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall") #not implemented, can you host?
-                 os.system('./raveninstall.exe')
-                 os.remove('raveninstall.exe')
+                 os.system(f'./{script_path}')
+                 os.remove(script_path)
+                 logging.info("Raven software installed.")
                 except Exception as e:
                  logging.warning(f'{e}\nCannot download from ravendevteam.org, trying GitHub')
                  try:
                   urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall")
-                  os.system('./raveninstall.exe')
-                  os.remove('raveninstall.exe')
+                  os.system(f'./{script_path}')
+                  os.remove(script_path)
+                  logging.info("Raven software installed.")
                  except Exception as  e:
                     logging.error(f'{e}\nCannot download from GitHub')
                 
-                logging.info("Raven software installed.")
         except Exception as e:
             logging.error(f"Error during Raven software installation: {e}")
         try:
