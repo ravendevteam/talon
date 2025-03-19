@@ -169,7 +169,7 @@ def main():
                  os.system('./raveninstall.exe')
                  os.remove('raveninstall.exe')
                  try:
-                  urllib.request.urlretrieve("not implemented, can you host?", "raveninstall")
+                  urllib.request.urlretrieve("https://github.com/MrBooks36/raven-installer/releases/download/1.1/Raven-Installer.exe", "raveninstall")
                   os.system('./raveninstall.exe')
                   os.remove('raveninstall.exe')
                  except Exception as  e:
