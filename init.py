@@ -2,11 +2,9 @@
 import sys
 import os
 import ctypes
-import subprocess
 import threading
 import logging
 import time
-import platform
 import urllib.request
 import winreg
 from PyQt5.QtWidgets import QApplication
@@ -17,7 +15,6 @@ from components.defender_check import DefenderCheck
 from components.raven_app_screen import RavenAppScreen
 from components.install_screen import InstallScreen
 from components import debloat_windows
-from components import raven_software_install
 from components import browser_install
 from components import windows_check
 from components import apply_background
