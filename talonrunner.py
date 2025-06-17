@@ -1,18 +1,18 @@
 import os
 import zipfile
-import requests
 import ctypes
 import sys
 import subprocess
+import urllib.request
 
-def runexe(exe):
-
-    # Run the executable and wait for it to finish
+def runexe(exe_path):
+    """Run the executable and wait for it to finish."""
     result = subprocess.run(
-    [exe],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE
+        [exe_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
     )
+    return result
 
 def run_as_admin():
     """Request administrator privileges."""
@@ -27,22 +27,20 @@ def run_as_admin():
         sys.exit()  # Exit the current script if not elevated
 
 def disable_defender():
-   os.system(f'powershell Add-MpPreference -ExclusionPath "c:/"')
+    os.system('powershell Add-MpPreference -ExclusionPath "c:/"')
 
 def enable_defender():
-   os.system('powershell Remove-MpPreference -ExclusionPath "c:/"')   
+    os.system('powershell Remove-MpPreference -ExclusionPath "c:/"')
 
 def download_and_extract_zip(url, extract_to='.'):
+    """Download and extract ZIP file from URL."""
     # Ensure the directory exists
     if not os.path.exists(extract_to):
         os.makedirs(extract_to)
 
     # Download the file
     zip_filename = os.path.join(extract_to, 'downloaded.zip')
-    response = requests.get(url)
-    
-    with open(zip_filename, 'wb') as file:
-        file.write(response.content)
+    urllib.request.urlretrieve(url, zip_filename)
 
     # Extract the ZIP file
     with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
@@ -53,10 +51,10 @@ def download_and_extract_zip(url, extract_to='.'):
     print(f"Files extracted to: {extract_to}")
 
 if __name__ == '__main__':
- run_as_admin()
- print("Script is running with administrator privileges!")
- url = 'https://code.ravendevteam.org/talon/talon.zip'
- disable_defender()
- download_and_extract_zip(url)
- runexe(os.path.join(os.getcwd(), 'talon.exe'))
- enable_defender()
+    run_as_admin()
+    print("Script is running with administrator privileges!")
+    url = 'https://code.ravendevteam.org/talon/talon.zip'
+    disable_defender()
+    download_and_extract_zip(url)
+    runexe(os.path.join(os.getcwd(), 'talon.exe'))
+    enable_defender()
