@@ -35,6 +35,12 @@ def main():
         (winreg.HKEY_CURRENT_USER,
          r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
          "HideFileExt", winreg.REG_DWORD, 0),
+        (winreg.HKEY_LOCAL_MACHINE,
+         r"SOFTWARE\Policies\Microsoft\Windows\Psched",
+         "NonBestEffortLimit", winreg.REG_DWORD, 0),  # Disables reserved bandwith
+        (winreg.HKEY_LOCAL_MACHINE,
+         r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile",
+         "NetworkThrottlingIndex", winreg.REG_DWORD, 0xFFFFFFFF),  # Disables network throttling
     ]
     for hive, key_path, name, value_type, value in registry_modifications:
         try:
