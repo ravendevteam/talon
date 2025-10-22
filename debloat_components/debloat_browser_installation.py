@@ -23,91 +23,34 @@ def load_choice() -> str:
 
 
 
-def ensure_chocolatey():
-	try:
-		subprocess.run(
-			["choco", "-v"],
-			check=True,
-			stdout=subprocess.DEVNULL,
-			stderr=subprocess.DEVNULL
-		)
-		logger.info("Chocolatey already installed.")
-	except (subprocess.CalledProcessError, FileNotFoundError):
-		logger.info("Chocolatey not found. Installing now...")
-		install_cmd = (
-			"Set-ExecutionPolicy Bypass -Scope Process -Force; "
-			"[System.Net.ServicePointManager]::SecurityProtocol = "
-			"[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; "
-			"iex ((New-Object System.Net.WebClient).DownloadString("
-			"'https://community.chocolatey.org/install.ps1'))"
-		)
-		logger.info(f"Running install command: {install_cmd}")
-		try:
-			run_powershell_command(install_cmd)
-			logger.info("Chocolatey install script executed.")
-			choco_exe = _get_choco_exe()
-			subprocess.run(
-				[choco_exe, "-v"],
-				check=True,
-				stdout=subprocess.DEVNULL,
-				stderr=subprocess.DEVNULL
-			)
-			logger.info("Chocolatey installed and verified.")
-		except Exception as e:
-			logger.error(f"Failed to install or verify Chocolatey: {e}")
-			show_error_popup(
-				f"Failed to install or verify Chocolatey:\n{e}",
-				allow_continue=False
-			)
-			sys.exit(1)
+def _get_link_and_flags(item: str) -> tuple | None:
+	# this and `_install_from_src` were created by me because choco was not installing chrome (from what i have heard)
+	# and this also limits install requirements for talon. 2 ravens 30 lines of code.
+    match item:
+        case "googlechrome":
+            return "https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7BAF2217C4-176B-12DB-546A-461311F7E448%7D%26lang%3Den%26browser%3D3%26usagestats%3D0%26appname%3DGoogle%2520Chrome%26needsadmin%3Dprefers%26ap%3D-arch_x64-statsdef_1%26installdataindex%3Dempty/update2/installers/ChromeSetup.exe", "/silent /install"
+        case "waterfox":
+            return "https://cdn1.waterfox.net/waterfox/releases/6.6.4/WINNT_x86_64/Waterfox%20Setup%206.6.4.exe", "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES"
+        case "brave":
+            return "https://referrals.brave.com/latest/BraveBrowserSetup.exe", "/silent /install"
+        case "firefox":
+            return "https://download.mozilla.org/?product=firefox-latest-ssl&os=win64&lang=en-US", "/S"
+        case "librewolf":
+            return "https://gitlab.com/api/v4/projects/44042130/packages/generic/librewolf/144.0-1/librewolf-144.0-1-windows-x86_64-setup.exe", "/S"
+        case "vcredist140":
+            return "https://aka.ms/vs/17/release/vc_redist.x64.exe", "/quiet /norestart"
+        case _:
+            return None
 
 
 
-def _get_choco_exe() -> str:
-	env_path = os.environ.get("ChocolateyInstall")
-	if env_path:
-		choco = os.path.join(env_path, "bin", "choco.exe")
-		if os.path.exists(choco):
-			return choco
-	default_path = os.path.join(
-		os.environ.get("ProgramData", r"C:\\ProgramData"),
-		"chocolatey",
-		"bin",
-		"choco.exe",
-	)
-	return default_path if os.path.exists(default_path) else "choco"
+def _install_from_src(pkg_id: str, display_name: str):
+	print(f"Installing {display_name} ({pkg_id}) from source.")
+	link = get_link_and_flags("googlechrome")
+	if link is not None:
+		urllib.request.urlretrieve(link, os.path.join(os.environ.get('TEMP', tempfile.gettempdir()), "item-install.exe"))
+		subprocess.run([os.path.join(os.environ.get('TEMP', tempfile.gettempdir()), "item-install.exe")), params.split()])
 
-
-
-def _install_choco_package(pkg_id: str, display_name: str):
-	choco_exe = _get_choco_exe()
-	logger.info(f"Installing via Chocolatey: {display_name} ({pkg_id})")
-	try:
-		result = subprocess.run(
-			[choco_exe, "install", pkg_id, "-y"],
-			check=False
-		)
-		if result.returncode in (0, 3010):
-			if result.returncode == 3010:
-				logger.info(f"Successfully installed {display_name}, reboot required.")
-			else:
-				logger.info(f"Successfully installed {display_name}.")
-			return
-		logger.error(f"Chocolatey exited with code {result.returncode} for {pkg_id}")
-		show_error_popup(
-			"A problem occurred with Chocolatey during installation. "
-			f"'{display_name}' could not be installed successfully.\n"
-			f"Chocolatey exit code: {result.returncode}",
-			allow_continue=True
-		)
-	except Exception as e:
-		logger.error(f"Unexpected error installing {pkg_id}: {e}")
-		show_error_popup(
-			"A problem occurred with Chocolatey during installation. "
-			f"'{display_name}' could not be installed successfully.\n"
-			f"Error: {e}",
-			allow_continue=True
-		)
 
 
 
@@ -117,12 +60,14 @@ def install_vcredist():
 	# modern programs rely on. For example, Waterfox. These dependencies cannot reasonably
 	# be considered "bloat" as bloat is unnecessary, while these dependencies, a very large
 	# amount of the time, are necessary.
-	_install_choco_package("vcredist140", "Microsoft Visual C++ 2015–2022 Redistributable")
+
+	#_install_choco_package("vcredist140", "Microsoft Visual C++ 2015–2022 Redistributable")
+	_install_from_src("vcredist140", "Microsoft Visual C++ 2015-2022 Resistributable")
 
 
 
 def install_browser(pkg_id: str):
-	_install_choco_package(pkg_id, f"browser '{pkg_id}'")
+	_install_from_src(pkg_id, f"browser '{pkg_id}'")
 
 
 
@@ -134,7 +79,7 @@ def main():
 		logger.error(f"Error reading browser choice: {e}")
 		show_error_popup(f"Internal error reading browser choice:\n{e}", allow_continue=False)
 		sys.exit(1)
-	ensure_chocolatey()
+	#ensure_chocolatey()
 	install_vcredist()
 	install_browser(pkg_id)
 
