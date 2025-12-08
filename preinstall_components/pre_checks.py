@@ -62,9 +62,35 @@ def _run_test_script(script_path: str) -> bool:
     return False
 
 
+def _check_onedrive_running() -> None:
+    """Checks if OneDrive is running and warns the user."""
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq OneDrive.exe"],
+            capture_output=True,
+            text=True,
+            creationflags=(
+                subprocess.CREATE_NO_WINDOW
+                if hasattr(subprocess, "CREATE_NO_WINDOW")
+                else 0
+            ),
+        )
+        # tasklist output contains the image name if found
+        if "OneDrive.exe" in result.stdout:
+            logger.warning("OneDrive detected running.")
+            show_error_popup(
+                "OneDrive is currently running.\n\n"
+                "Running Talon while OneDrive is active may result in accidental data loss (Issue #217).\n"
+                "It is HIGHLY recommended that you sign out and close OneDrive completely before continuing.",
+                allow_continue=True,
+            )
+    except Exception as e:
+        logger.error(f"OneDrive check failed: {e}")
+
 
 def main() -> None:
     check_windows_11_home_or_pro()
+    _check_onedrive_running()
     _check_temp_writable()
 
 
