@@ -45,7 +45,7 @@ def _download_config(url: str) -> str:
 
 
 
-def main(config_path=None):
+def main(config_path=None, win11debloat_config_path=None):
 	if getattr(sys, 'frozen', False):
 		base_path = os.path.dirname(sys.executable)
 	else:
@@ -118,31 +118,37 @@ def main(config_path=None):
 		except Exception:
 			pass
 		sys.exit(1)
-	args2 = [
-		'-Silent',
-		'-RemoveApps',
-		'-RemoveGamingApps',
-		'-DisableTelemetry',
-		'-DisableBing',
-		'-DisableSuggestions',
-		'-DisableLockscreenTips',
-		'-RevertContextMenu',
-		'-TaskbarAlignLeft',
-		'-HideSearchTb',
-		'-DisableWidgets',
-		'-DisableCopilot',
-		'-ClearStartAllUsers',
-		'-DisableDVR',
-		'-DisableStartRecommended',
-		'-ExplorerToThisPC',
-		'-DisableMouseAcceleration',
-		'-DisableDesktopSpotlight',
-		'-DisableSettings365Ads',
-		'-DisableSettingsHome',
-		'-DisablePaintAI',
-		'-DisableNotepadAI',
-		'-DisableStickyKeys',
-	]
+
+	if not win11debloat_config_path:
+		win11debloat_config_path = os.path.join(base_path, 'configs', 'win11debloat_default.json')
+
+	if not os.path.exists(win11debloat_config_path):
+		logger.error(f"Win11Debloat config not found: {win11debloat_config_path}")
+		try:
+			show_error_popup(
+				f"Win11Debloat config not found:\n{win11debloat_config_path}",
+				allow_continue=False
+			)
+		except Exception:
+			pass
+		sys.exit(1)
+
+	try:
+		with open(win11debloat_config_path, 'r') as f:
+			args2 = json.load(f)
+		if not isinstance(args2, list):
+			raise ValueError("Config JSON must contain a list of arguments.")
+	except Exception as e:
+		logger.error(f"Failed to load Win11Debloat config: {e}")
+		try:
+			show_error_popup(
+				f"Failed to load Win11Debloat config:\n{e}",
+				allow_continue=False
+			)
+		except Exception:
+			pass
+		sys.exit(1)
+
 	flags = ' '.join(args2)
 	cmd2 = f"& '{win11debloat_path}' {flags}"
 	logger.info("Executing Raphi Win11Debloat")
