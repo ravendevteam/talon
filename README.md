@@ -42,3 +42,4 @@ Documentation is available [here](https://docs.ravendevteam.org/talon). (This do
 - [Alandlt15](https://github.com/Alandlt15)
 - [lotusflowr](https://github.com/lotusflowr)
 - [Oliver Smith](https://github.com/CorruptBandit)
+- [MrBooks36](https://github.com/MrBooks36)
