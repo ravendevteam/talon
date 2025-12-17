@@ -1,4 +1,4 @@
-import subprocess, os
+import subprocess
 from utilities.util_error_popup import show_error_popup
 from utilities.util_logger import logger
 
