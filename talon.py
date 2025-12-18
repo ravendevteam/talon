@@ -78,12 +78,6 @@ def parse_args(argv=None):
 		metavar="PATH",
 		help="Pass a custom WinUtil configuration to use instead of the default Talon configuration.",
 	)
-	parser.add_argument(
-        "--win11debloat-config",
-        dest="win11debloat_config",
-        metavar="PATH",
-        help="Pass a custom JSON configuration file for Win11Debloat parameters.",
-    )
 	for slug, _, _ in DEBLOAT_STEPS:
 		dest = f"skip_{slug.replace('-', '_')}_step"
 		parser.add_argument(
@@ -227,7 +221,7 @@ def main(argv=None):
 			_update_status(bus, status_label, message)
 			try:
 				if func is debloat_execute_external_scripts.main:
-					func(args.config, args.win11debloat_config)
+					func(args.config)
 				else:
 					func()
 			except Exception:
