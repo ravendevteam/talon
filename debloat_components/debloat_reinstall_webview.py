@@ -1,11 +1,11 @@
-import subprocess
-from utilities.util_error_popup import show_error_popup
+import subprocess, os
 from utilities.util_logger import logger
+from utilities.util_error_popup import show_error_popup
 
 
-
-
-def reinstall_webview(webview_installer_path: str,) -> int:
+def main() -> int:
+    webview_installer_path = os.path.join(os.path.dirname(__file__), "..", "external_scripts", "webview2.exe")
+    logger.info("Reinstalling WebView2 runtime...")
     cmd = [webview_installer_path, "/silent", "/install",
     ]
     logger.info(f"Launching WebView2 installer: {webview_installer_path}")
@@ -21,9 +21,9 @@ def reinstall_webview(webview_installer_path: str,) -> int:
         )
         stdout, stderr = proc.communicate()
         rc = proc.returncode
+        logger.info(f'WebView2 installer return code: {rc}')
+        logger.info(f'WebView2 installer stdout: {stdout}')
+        logger.info(f'WebView2 installer stderr: {stderr}')
     except Exception as e:
         logger.exception(f"Failed to start WebView2 installer: {e}")
-        show_error_popup(
-            f"Error launching WebView2 installer:\n{e}",
-        )
-        raise
+        # Idk if you want to add an error popup for this as its just a small thing

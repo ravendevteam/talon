@@ -17,6 +17,7 @@ import debloat_components.debloat_browser_installation as debloat_browser_instal
 import debloat_components.debloat_registry_tweaks as debloat_registry_tweaks
 import debloat_components.debloat_configure_updates as debloat_configure_updates
 import debloat_components.debloat_apply_background as debloat_apply_background
+import debloat_components.debloat_reinstall_webview as debloat_reinstall_webview
 from ui_components.ui_base_full import UIBaseFull
 from ui_components.ui_header_text import UIHeaderText
 from ui_components.ui_title_text import UITitleText
@@ -40,6 +41,12 @@ DEBLOAT_STEPS = [
 		"execute-external-scripts",
 		"Debloating Windows...",
 		debloat_execute_external_scripts.main,
+	),
+	(
+		"reinstall-webview2",
+		"Reinstalling Webview2...",
+		debloat_reinstall_webview.main,
+
 	),
 	(
 		"registry-tweaks",
@@ -183,7 +190,8 @@ def _update_status(bus, label: UIHeaderText, message: str):
 	if label is None:
 		print(message)
 		return
-	bus.set_msg.emit(message)
+	if message is not None:
+		bus.set_msg.emit(message)
 	bus.raiseit.emit()
 
 
@@ -201,7 +209,8 @@ def main(argv=None):
 			run_screen("screen_browser_select")
 		else:
 			args.skip_browser_installation_step = True
-		run_screen("screen_donation_request")
+			args.skip_reinstall_webview2_step = True
+			run_screen("screen_donation_request")
 	app = None
 	status_label = None
 	spinner = None

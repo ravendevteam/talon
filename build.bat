@@ -6,6 +6,7 @@ set ProductVersion=2.1.0.0
 :: debloating process. Before, Talon would download then execute these during the debloating process,
 :: but to make Talon fully offline-capable, it now downloads them at build time then bundles them
 :: inside the produced executable.
+:: The only exception to this is for the webview2 online installer because the offline install takes up a lot of space in the produced executable
 set "ROOT=%~dp0"
 set "SCRIPT_BUNDLE_DIR=%ROOT%external_scripts"
 if exist "%SCRIPT_BUNDLE_DIR%" rd /s /q "%SCRIPT_BUNDLE_DIR%"

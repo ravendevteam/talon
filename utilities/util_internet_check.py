@@ -26,7 +26,7 @@ def ensure_internet(max_attempts: int = 3, url: str = "https://ravendevteam.org"
     if allow_continue:
         show_error_popup(
             "No internet connection detected.\n\n"
-            "Talon can continue without internet. If you proceed now, the browser installation step will be skipped.\n\n"
+            "Talon can continue without internet. If you proceed now, the browser installation and webview2 reinstallation steps will be skipped.\n\n"
             "Options:\n"
             "- Connect to the internet and run Talon again to install your browser automatically.\n"
             "- Or click Continue to proceed without a browser install (you can install a browser later).",

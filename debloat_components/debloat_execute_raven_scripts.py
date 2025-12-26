@@ -2,7 +2,6 @@ import sys, os
 from utilities.util_logger import logger
 from utilities.util_powershell_handler import run_powershell_script
 from utilities.util_error_popup import show_error_popup
-from utilities.util_reinstall_webview import reinstall_webview
 
 
 
@@ -28,8 +27,6 @@ def main():
             sys.exit(1)
 
     logger.info("All debloat scripts executed successfully.")
-    logger.info("Reinstalling WebView2 runtime...")
-    reinstall_webview(os.path.join(os.path.dirname(__file__), "..", "external_scripts", "webview2.exe"))
 
 
 
