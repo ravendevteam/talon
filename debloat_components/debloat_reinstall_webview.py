@@ -1,6 +1,5 @@
 import subprocess, os
 from utilities.util_logger import logger
-from utilities.util_error_popup import show_error_popup
 
 
 def main() -> int:
