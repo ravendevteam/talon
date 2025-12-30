@@ -5,19 +5,17 @@
             "WPFTweaksDeBloat",
             "WPFTweaksDisableLMS1",
             "WPFTweaksRemoveHome",
-            "WPFTweaksAH",
+            "WPFTweaksActivity",
             "WPFTweaksServices",
             "WPFTweaksConsumerFeatures",
             "WPFTweaksRemoveCopilot",
-            "WPFTweaksWifi",
             "WPFTweaksTele",
             "WPFTweaksDisableBGapps",
             "WPFTweaksRemoveGallery",
-            "WPFTweaksRemoveOnedrive",
+
             "WPFTweaksRightClickMenu",
-            "WPFTweaksRecallOff",
-            "WPFTweaksLoc",
-            "WPFTweaksDisableWpbtExecution",
+            "WPFTweaksLocation",
+            "WPFTweaksWPBT",
             "WPFTweaksDVR",
             "WPFTweaksDisableExplorerAutoDiscovery"
         ]
