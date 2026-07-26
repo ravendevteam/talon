@@ -1,15 +1,14 @@
 > [!NOTE]
 > All of our free software is designed to respect your privacy, while being as simple to use as possible. Our free software is licensed under the [BSD-3-Clause license](https://ravendevteam.org/files/BSD-3-Clause.txt). By using our software, you acknowledge and agree to the terms of the license.
 
-Simple but powerful tool to debloat Windows in 2 clicks, removing embedded AI, decreasing resource usage, and making your system feel snappier.
+Windows the way you want it, in 2 clicks.
 
-Documentation is available [here](https://github.com/ravendevteam/talon/blob/main/DOCUMENTATION.md).
-
+A FAQ is available [here](https://raventechnologiesgroup.com/talon/#talon-faq-heading). Documentation is available [here](https://github.com/ravendevteam/talon/blob/main/DOCUMENTATION.md).
 
 ## Installation
-You can get Talon Talon from [here](https://raventechnologiesgroup.com/explore#talon).
+You can get Talon Talon from [here](https://raventechnologiesgroup.com/talon).
 
-## Run Via PowerShell (Express Method)
+## Run Via PowerShell (Main Method)
 
 Talon can be ran via PowerShell. This is a great choice if you're more tech savvy and/or you don't want to deal with the difficulties of Windows Defender. Open PowerShell as Administrator, then run the following command:
 
@@ -17,13 +16,13 @@ Talon can be ran via PowerShell. This is a great choice if you're more tech savv
 irm https://debloat.win | iex
 ```
 
-## Run Talon as an Executable (Manual Method)
+## Run Talon as an Executable (Legacy Method)
 
-For those who wish to have more granular control over what happens on their system. Follow these steps:
+This is the old-fashioned way of running Talon, which allows you to utilize command-line arguments and use Talon in more advanced ways, but is also more complex.
 
-1. Temporarily set C: as an exclusion in Windows Defender. This temporarily disables action from Defender to avoid interference with Talon mid-process, and avoid issues or corruption. **REMOVE THE EXCLUSION AFTER INSTALLING TALON!**
+1. Temporarily set C: as an exclusion in Windows Defender. This temporarily disables action from Defender to avoid interference with Talon mid-process, and avoid crashes or a half-debloated state. **REMOVE THE EXCLUSION AFTER INSTALLING TALON!**
 
-2. Head to the download page for Talon and select "Manual," which will provide an option to download Talon.
+2. Download Talon [here](https://raventechnologiesgroup.com/download?product=talon).
 
 3. Once downloaded, extract the ZIP, locate Talon.exe, and run it.
 
