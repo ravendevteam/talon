@@ -6,7 +6,7 @@ Windows the way you want it, in 2 clicks.
 A FAQ is available [here](https://raventechnologiesgroup.com/talon/#talon-faq-heading). Documentation is available [here](https://github.com/ravendevteam/talon/blob/main/DOCUMENTATION.md).
 
 ## Installation
-You can get Talon Talon from [here](https://raventechnologiesgroup.com/talon).
+You can get Talon from [here](https://raventechnologiesgroup.com/talon).
 
 ## Run Via PowerShell (Main Method)
 
