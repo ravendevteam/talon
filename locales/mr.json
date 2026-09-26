@@ -18,7 +18,7 @@
             "configure_updates": "Windows Update Policy कॉन्फिगर करत आहे...",
             "apply_background": "Desktop background सेट करत आहे...",
             "dry_run_complete": "Dry run पूर्ण झाले. सिस्टम मध्ये कोणतेही बदल केले नाहीत.",
-            "complete_no_restart": "इंस्टॉलेशन पूर्ण झाले. Talon तुमची सिस्टम आपोआप रीस्टार्ट करणार नाही."
+            "complete_no_restart": "इंस्टॉलेशन पूर्ण झाले."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "डाव्या बाजूची यादी Talon तुमच्या सिस्टमवर कोणते बदल करणार आहे ते दाखवते. एखादा बदल नको असल्यास, तुम्ही तो यादीतून काढू शकता.\n\nसर्व काही योग्य वाटत असल्यास, \"Start\" निवडा.",
             "no_browser_warning": "कोणताही ब्राउझर इन्स्टॉल केला जाणार नाही.",
             "no_internet_info": "इंटरनेट कनेक्शन नाही. तुम्ही internet ला connected नाही आहात. Talon ब्राउझर इन्स्टॉल करणार नाही.",
-            "no_updates_warning": "Update Policy कॉन्फिगर केले जाणार नाही. Updates मुळे bloat परत येऊ शकतात आणि Talon चे काही बदल पूर्ववत होऊ शकतात.",
             "nothing_to_do": "Debloat प्रक्रिया सुरू करता येत नाही.",
             "reset_defaults": "Default सेटिंग्ज परत आणा",
             "advanced": "Advanced",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Desktop वर visual tweaks लागू करा",
             "tooltip": "Windows Registry मध्ये बदल करून सिस्टम अधिक clean आणि वापरायला सोपी बनवली जाते. उदा. taskbar डावीकडे आणणे, dark mode लावणे, menu delay कमी करणे आणि file extensions दाखवणे."
-        },
-        "configure_updates": {
-            "text": "फक्त security updates चालू ठेवा",
-            "tooltip": "Windows updates मुळे bloatware परत येऊ नये आणि Talon चे बदल रद्द होऊ नयेत म्हणून Talon security-only update policy सेट करते; non-security \"feature\" updates वगळले जातात. हे Windows Pro वर कायमस्वरूपी लागू राहते, परंतु Windows Home वर केवळ ३६५ दिवसांसाठी."
         },
         "apply_background": {
             "text": "Desktop background लागू करा",

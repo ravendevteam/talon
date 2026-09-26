@@ -9,16 +9,19 @@
         "install_overlay": {
             "title": "Talon is installing",
             "guidance": "Please don't use your keyboard or mouse. You can watch as Talon works.",
-            "remove_edge": "Removing Microsoft Edge permanently...",
+            "removing_edge": "Removing Microsoft Edge...",
             "uninstall_outlook_onedrive": "Uninstalling Outlook and OneDrive...",
             "browser_installation": "Installing your chosen browser...",
+            "program_installation": "Installing your selected programs through Chocolatey...",
+            "group_policy": "Applying your Local Group Policy changes...",
             "debloat_windows_phase_one": "Debloating Windows phase one (WinUtil)...",
             "debloat_windows_phase_two": "Debloating Windows phase two (Win11Debloat)...",
             "registry_tweaks": "Making some visual tweaks...",
             "configure_updates": "Configuring Windows Update policies...",
             "apply_background": "Setting your desktop background...",
             "dry_run_complete": "Dry run complete. No system changes were made.",
-            "complete_no_restart": "Installation complete. Talon will not restart your system automatically."
+            "complete_no_restart": "Installation complete.",
+            "complete_with_warnings": "Installation complete with warnings ({count}). Check the log for details."
         }
     },
     "configuration": {
@@ -31,8 +34,8 @@
             "empty": "No items.",
             "guidance": "The list on the left shows everything Talon is going to do to your system. If there's something you don't want it to do, you can remove items from the list.\n\nIf everything looks good to you, select \"Start.\"",
             "no_browser_warning": "No browser will be installed.",
-            "no_internet_info": "You aren't connected to internet. Talon won't install a browser.",
-            "no_updates_warning": "Update policy won't be configured. Updates may restore bloat and undo some of Talon's settings.",
+            "no_internet_info": "You aren't connected to internet. Talon won't install a browser or other programs.",
+            "no_updates_warning": "Windows Update settings will be left unchanged, including any policies from an earlier Talon run.",
             "nothing_to_do": "Cannot start debloat process. Nothing to do.",
             "reset_defaults": "Reset to Defaults",
             "advanced": "Advanced",
@@ -46,6 +49,13 @@
             "import_winutil": "Import WinUtil Config",
             "set_win11_args": "Set Win11Debloat Arguments",
             "edit_registry_changes": "Edit Registry Changes",
+            "edit_program_packages": "Program Packages",
+            "edit_group_policy_changes": "Group Policy Changes",
+            "group_policy_unavailable": "Group Policy changes are available only on supported non-Home Windows editions. Talon must be able to identify your edition.",
+            "program_packages_required": "Add packages with Program Packages before enabling this step.",
+            "group_policy_changes_required": "Add changes with Group Policy Changes before enabling this step.",
+            "internet_required": "An internet connection is required for installation.",
+            "browser_required": "Select a browser before enabling this step.",
             "export_plan": "Export As Install Plan",
             "set_background": "Set Applied Background",
             "true": "true",
@@ -58,6 +68,10 @@
             "save_changes": "Save Changes",
             "win11_args_title": "Set Win11Debloat Arguments",
             "registry_changes_title": "Edit Registry Changes",
+            "program_packages_title": "Program Packages (Chocolatey)",
+            "program_packages_help": "Enter one Chocolatey package ID per line, for example: 7zip, vlc, or notepadplusplus (each on its own line). Enter IDs only, without commands or options. Saving does not enable installation: set Install programs through Chocolatey to true in Advanced settings. Clearing this list disables that step.",
+            "group_policy_changes_title": "Edit Local Group Policy Changes",
+            "group_policy_changes_help": "Enter a JSON array of registry-based Local Group Policy changes. Each object needs hive (HKLM for Computer Configuration or HKCU for User Configuration), key_path, name, value_type (REG_DWORD or REG_SZ), and value (an integer or string respectively). User Configuration applies to users of this computer. Use keys under Software\\Policies or Software\\Microsoft\\Windows\\CurrentVersion\\Policies; escape backslashes as \\\\ in JSON. Saving does not enable changes: set Apply Local Group Policy changes to true in Advanced settings. An empty array disables that step.",
             "import_plan_title": "Import Talon Install Plan",
             "import_winutil_title": "Import WinUtil Config",
             "export_plan_title": "Export As Install Plan",
@@ -67,9 +81,9 @@
         }
     },
     "steps": {
-        "remove_edge_permanently": {
-            "text": "Remove Microsoft Edge permanently",
-            "tooltip": "Uninstalls Microsoft Edge, and ensures it doesn't come back. You can always reinstall it yourself if you want. Apps that rely on it (msedgewebview2) will still work."
+        "remove_edge": {
+            "text": "Remove Microsoft Edge",
+            "tooltip": "Removes the stable Microsoft Edge browser while preserving browser profiles, WebView2, and other Edge channels. Applies an Edge-specific installation policy on domain-joined systems. Windows or another installer may restore Edge later."
         },
         "uninstall_outlook_onedrive": {
             "text": "Uninstall Outlook & OneDrive",
@@ -79,6 +93,14 @@
             "text": "Install web browser",
             "text_with_browser": "Install web browser: {browser_name}",
             "tooltip": "No browser selected yet."
+        },
+        "program_installation": {
+            "text": "Install programs through Chocolatey",
+            "tooltip": "Installs the Chocolatey packages listed in Advanced settings. This step is off by default and requires internet access."
+        },
+        "group_policy": {
+            "text": "Apply Local Group Policy changes",
+            "tooltip": "Applies the registry-based Local Group Policy changes listed in Advanced settings. This step is off by default and is available only on supported non-Home Windows editions."
         },
         "debloat_windows_phase_one": {
             "text": "Debloat Windows phase one (WinUtil)",
@@ -93,8 +115,8 @@
             "tooltip": "Modifies the Windows Registry to make your desktop look and feel better, including but not limited to changing your taskbar to be left-aligned, setting your theme to dark theme, removing delay in menus, and showing file extensions."
         },
         "configure_updates": {
-            "text": "Set security-only update policy",
-            "tooltip": "In order to prevent Windows updates from reintroducing bloat and undoing the changes made, Talon sets an update policy on your system which results in only receiving security updates, leaving out non-security \"feature\" updates. It lasts permanently on Windows Pro, but only 365 days on Windows Home."
+            "text": "Configure Windows Update",
+            "tooltip": "On Pro, Education, and Enterprise editions, uses Windows Update for Business policies to defer feature updates for up to 365 days after release and quality updates (including security fixes) for 4 days, exclude drivers, and notify before downloading updates. On Home, uses registry settings to target the currently installed Windows 11 release and request a 4-day quality-update delay. Home does not have official Windows Update for Business support. Updates are not disabled or restricted to security fixes."
         },
         "apply_background": {
             "text": "Apply desktop background",
@@ -134,6 +156,8 @@
         "installation_unexpected": "An unexpected error occurred during installation.\nCheck the log for details.",
         "completion_marker_failed": "Failed to record Talon completion marker.\n{error}",
         "import_plan_failed": "Failed to import install plan:\n{error}",
+        "update_plan_failed": "Failed to update install plan:\n{error}",
+        "start_plan_failed": "Cannot start with an invalid install plan:\n{error}",
         "import_winutil_failed": "Failed to import WinUtil config:\n{error}",
         "winutil_config_invalid": "WinUtil config must be a JSON object or array.",
         "export_plan_failed": "Failed to export install plan:\n{error}",
@@ -142,12 +166,18 @@
         "save_win11_args_failed": "Failed to save Win11Debloat arguments:\n{error}",
         "registry_changes_invalid": "Registry changes must be a JSON object or array.",
         "save_registry_changes_failed": "Failed to save registry changes:\n{error}",
+        "save_program_packages_failed": "Failed to save program packages:\n{error}",
+        "save_group_policy_changes_failed": "Failed to save Group Policy changes:\n{error}",
+        "group_policy_unsupported": "Local Group Policy changes require a supported non-Home Windows edition.",
+        "group_policy_invalid": "Invalid Group Policy changes: {error}",
+        "group_policy_empty": "Add at least one Group Policy change before enabling this step.",
+        "group_policy_failed": "Unable to apply Local Group Policy changes: {error}",
         "unsupported_os": "Unsupported OS detected.\nThis tool requires Windows 11.",
         "windows_version_failed": "Failed to determine Windows version.\nThis tool requires Windows 11.",
         "incompatible_windows_version": "Incompatible Windows version detected:\n    {product_name} (build {build_num})\nThis tool requires Windows 11.",
         "temp_unwritable": "Talon could not write files to {talon_dir}.\nPlease free up disk space or check permissions.",
         "admin_elevation_failed": "Unable to elevate to Administrator:\n{error}",
-        "no_internet_continue": "No internet connection detected.\n\nTalon can continue without internet. If you proceed now, the browser installation step will be skipped.\n\nOptions:\n- Connect to the internet and run Talon again to install your browser automatically.\n- Or click Continue to proceed without a browser install (you can install a browser later).",
+        "no_internet_continue": "No internet connection detected.\n\nTalon can continue without internet. Browser and program installation steps will be skipped.\n\nOptions:\n- Connect to the internet and run Talon again to install your browser and selected programs automatically.\n- Or click Continue to proceed without installing programs (you can install them later).",
         "no_internet_required": "No internet connection detected.\nAn active internet connection is required to run Talon in non-headless mode.\n",
         "powershell_script_launch_failed": "Error launching PowerShell script:\n{error}",
         "powershell_script_failed": "PowerShell script '{script_name}' failed (exit code {exit_code})",
@@ -161,6 +191,12 @@
         "wallpaper_not_found": "Wallpaper file not found: {path}",
         "desktop_background_failed": "Failed to set desktop background:\n{error}",
         "chocolatey_install_failed": "Failed to install or verify Chocolatey:\n{error}",
+        "chocolatey_packages_type": "Chocolatey packages must be a list of package IDs.",
+        "chocolatey_package_invalid": "Invalid Chocolatey package ID: {package}. Enter package IDs only, without paths, options, or commands.",
+        "chocolatey_packages_missing": "Select at least one Chocolatey package before enabling program installation.",
+        "chocolatey_packages_error": "Unable to read the selected Chocolatey packages: {error}",
+        "chocolatey_package_failed": "Chocolatey failed to install {display_name} (exit code {exit_code}).",
+        "chocolatey_package_error": "An error occurred while installing {display_name}: {error}",
         "chocolatey_browser_failed": "A problem occurred with Chocolatey during installation. '{display_name}' could not be installed successfully.\nChocolatey exit code: {exit_code}",
         "chocolatey_browser_error": "A problem occurred with Chocolatey during installation. '{display_name}' could not be installed successfully.\nError: {error}",
         "browser_metadata_missing": "No browser package was provided by the runner metadata.",
@@ -170,6 +206,10 @@
         "font_load_failed": "Failed to load font file:\n{font_path}",
         "font_family_missing": "No font families found in font file:\n{font_path}",
         "windows_edition_failed": "Failed to determine Windows edition:\n{error}",
+        "update_policy_failed": "Failed to configure Windows Update policy:\n{error}",
+        "outlook_onedrive_failed": "Failed to completely remove Outlook and OneDrive:\n{error}",
+        "edge_removal_failed": "Failed to completely remove Microsoft Edge:\n{error}",
+        "native_output_failed": "The native Windows output check failed:\n{error}",
         "powershell_named_script_failed": "Failed to execute PowerShell script:\n{script_name}\n\n{error}",
         "registry_changes_payload_invalid": "Invalid registry changes payload.\n\n{error}",
         "registry_tweak_failed": "Failed to apply registry tweak:\n{target}\n\n{error}",

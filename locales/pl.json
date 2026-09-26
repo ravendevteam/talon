@@ -18,7 +18,7 @@
             "configure_updates": "Konfiguracja zasad aktualizacji Windows Update...",
             "apply_background": "Ustawianie tła pulpitu...",
             "dry_run_complete": "Przebieg próbny ukończony. Nie zostały wprowadzone żadne zmiany w systemie.",
-            "complete_no_restart": "Instalacja zakończona. Talon nie uruchomi systemu ponownie automatycznie."
+            "complete_no_restart": "Instalacja zakończona."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "Lista po lewej stronie prezentuje, co Talon zrobi z twoim systemem. Jeśli jest coś, czego nie chcesz zrobić, możesz usunąć pozycję z listy.\n\nJeżeli wszystko wygląda dobrze, wybierz \"Start.\"",
             "no_browser_warning": "Żadna przeglądarka nie zostanie zainstalowana.",
             "no_internet_info": "Nie jesteś połączony z internetem. Talon nie zainstaluje przeglądarki.",
-            "no_updates_warning": "Zasady aktualizacji nie zostaną skonfigurowane. Aktualizacje mogą przywrócić niechciane programy oraz odwrócić niektóre zmiany wprowadzone przez Talona.",
             "nothing_to_do": "Nie można zacząć procesu odchudzania. Nie ma nic do zrobienia.",
             "reset_defaults": "Przywróć domyślne",
             "advanced": "Zaawansowane",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Wprowadź zmiany wizualne pulpitu",
             "tooltip": "Wprowadza modyfikację rejestru systemowego w celu poprawy wyglądu i uczucia z użytkowania, takich jak: zmiana wyrównania paska zadań do lewej strony, zmiana motywu systemu na ciemny, usunięcie opóźnień w menu, oraz pokazywanie rozszerzeń plików."
-        },
-        "configure_updates": {
-            "text": "Ustaw zasadę aktualizacji na tylko zabezpieczenia",
-            "tooltip": "Aby zapobiec aktualizacją Windowsa na przywrócenie niechcianych aplikacji oraz odwrócenia wprowadzonych zmian, Talon ustawia zasady aktualizacji w systemie, które sprawiają, że system otrzymuje tylko aktualizacje zabezpieczeń, ignorując niepotrzebne aktualizacje \"funkcji\". Zmiana ta jest trwała w Windowsie Pro, jednak na Windowsie Home działa tylko przez 365 dni."
         },
         "apply_background": {
             "text": "Ustaw tło pulpitu",

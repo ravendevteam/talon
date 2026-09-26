@@ -1,8 +1,6 @@
 import winreg
 from typing import Any, Union, Optional
 from utilities.util_logger import logger
-from utilities.util_error_popup import show_error_popup
-from configuration_components.localization import t
 
 
 
@@ -56,101 +54,4 @@ def set_value(
         logger.info(f"Set registry value: {hive}\\{key_path}\\{name} = {value!r} (type={value_type})")
     except Exception as e:
         logger.exception(f"Error setting registry value {hive}\\{key_path}\\{name}: {e}")
-        show_error_popup(
-            t("errors.registry_set_failed", {"target": f"{hive}\\{key_path}\\{name}", "error": e}),
-            allow_continue=False
-        )
-        raise
-
-
-
-def get_value(
-    hive: Union[str, int],
-    key_path: str,
-    name: str
-) -> Any:
-    try:
-        hive_const = _resolve_hive(hive)
-        access = winreg.KEY_READ | VIEW_FLAG
-        with winreg.OpenKey(hive_const, key_path, 0, access) as key:
-            val, _ = winreg.QueryValueEx(key, name)
-            logger.info(f"Read registry value: {hive}\\{key_path}\\{name} = {val!r}")
-            return val
-    except FileNotFoundError:
-        logger.warning(f"Registry value not found: {hive}\\{key_path}\\{name}")
-        return None
-    except Exception as e:
-        logger.exception(f"Error reading registry value {hive}\\{key_path}\\{name}: {e}")
-        show_error_popup(
-            t("errors.registry_read_failed", {"target": f"{hive}\\{key_path}\\{name}", "error": e}),
-            allow_continue=False
-        )
-        raise
-
-
-
-def delete_value(
-    hive: Union[str, int],
-    key_path: str,
-    name: str
-) -> None:
-    try:
-        hive_const = _resolve_hive(hive)
-        access = winreg.KEY_WRITE | VIEW_FLAG
-        with winreg.OpenKey(hive_const, key_path, 0, access) as key:
-            winreg.DeleteValue(key, name)
-        logger.info(f"Deleted registry value: {hive}\\{key_path}\\{name}")
-    except FileNotFoundError:
-        logger.warning(f"Registry value to delete not found: {hive}\\{key_path}\\{name}")
-    except Exception as e:
-        logger.exception(f"Error deleting registry value {hive}\\{key_path}\\{name}: {e}")
-        show_error_popup(
-            t("errors.registry_delete_value_failed", {"target": f"{hive}\\{key_path}\\{name}", "error": e}),
-            allow_continue=False
-        )
-        raise
-
-
-
-def create_key(
-    hive: Union[str, int],
-    key_path: str
-) -> None:
-    try:
-        hive_const = _resolve_hive(hive)
-        access = winreg.KEY_WRITE | VIEW_FLAG
-        with winreg.CreateKeyEx(hive_const, key_path, 0, access):
-            pass
-        logger.info(f"Created registry key: {hive}\\{key_path}")
-    except Exception as e:
-        logger.exception(f"Error creating registry key {hive}\\{key_path}: {e}")
-        show_error_popup(
-            t("errors.registry_create_key_failed", {"target": f"{hive}\\{key_path}", "error": e}),
-            allow_continue=False
-        )
-        raise
-
-
-
-def delete_key(
-    hive: Union[str, int],
-    key_path: str
-) -> None:
-    try:
-        hive_const = _resolve_hive(hive)
-        if hasattr(winreg, 'DeleteKeyEx'):
-            winreg.DeleteKeyEx(hive_const, key_path, VIEW_FLAG, 0)
-        else:
-            parent_path, _, sub_key = key_path.rpartition('\\')
-            with winreg.OpenKey(hive_const, parent_path, 0, winreg.KEY_WRITE | VIEW_FLAG) as parent:
-                winreg.DeleteKey(parent, sub_key)
-        logger.info(f"Deleted registry key: {hive}\\{key_path}")
-    except FileNotFoundError:
-        logger.warning(f"Registry key to delete not found: {hive}\\{key_path}")
-    except Exception as e:
-        logger.exception(f"Error deleting registry key {hive}\\{key_path}: {e}")
-        show_error_popup(
-            t("errors.registry_delete_key_failed", {"target": f"{hive}\\{key_path}", "error": e}),
-            allow_continue=False
-        )
         raise

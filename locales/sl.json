@@ -18,7 +18,7 @@
             "configure_updates": "Urejamo pravila za posodobitve sistema Windows ...",
             "apply_background": "Nastavljamo vaše ozadje namizja ...",
             "dry_run_complete": "Poskusni zagon je končan. Sistemskih sprememb ni bilo.",
-            "complete_no_restart": "Namestitev je končana. Talon sistema ne bo samodejno ponovno zagnal."
+            "complete_no_restart": "Namestitev je končana."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "Seznam na levi strani kaže, kaj vse bo Talon storil sistemu. Če je kaj, česar ne želite, da stori, lahko to odstranite s seznama.\n\nČe se vam vse zdi pravilno, izberite  \"Začni.\"",
             "no_browser_warning": "Brskalnik ne bo nameščen.",
             "no_internet_info": "Niste povezani na omrežje. Talon ne bo namestil brskalnika.",
-            "no_updates_warning": "Politika posodobitev ne bo nastavljena. Posodobitve lahko obnovijo nepotrebno programje in razveljavijo nekatere Talonove nastavitve.",
             "nothing_to_do": "Ne morem zagnati procesa odstranitve nepotrebne programske opreme, saj ni nič za storiti.",
             "reset_defaults": "Vrni Privzeto",
             "advanced": "Napredno",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Naredi vizualne spremembe namizju",
             "tooltip": "Spremeni register Windows za boljši izgled in delovanje namizja, vključno z (a ne omejeno na) poravnavo opravilne vrstice na levo, nastavljanjem temnega načina, odstranitvijo zamika v menijih in prikazovanjem končnic datotek."
-        },
-        "configure_updates": {
-            "text": "Nastavi politiko izključno varnostnih posodobitev",
-            "tooltip": "Da prepreči, da bi posodobitve Windows znova uvedle nepotrebno programje in razveljavile opravljene spremembe, Talon nastavi politiko posodobitev, ki omogoča prejemanje samo varnostnih posodobitev, brez ne-varnostnih \"zbirnih\" posodobitev. Na Windows Pro velja trajno, na Windows Home pa le 365 dni."
         },
         "apply_background": {
             "text": "Nastavi ozadje namizja",

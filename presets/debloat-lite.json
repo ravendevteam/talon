@@ -6,7 +6,11 @@
   "selected_browser_name": "None",
   "selected_browser_package": "",
   "include_browser_install": false,
+  "chocolatey_packages": [],
+  "group_policy_changes": [],
   "items": [
+    {"key": "program-installation", "enabled": false},
+    {"key": "group-policy", "enabled": false},
     {
       "key": "developer-mode",
       "text": "",
@@ -73,14 +77,12 @@
       "WPFTweaksDisableExplorerAutoDiscovery",
       "WPFTweaksDisplay",
       "WPFTweaksRightClickMenu",
-      "WPFTweaksRevertStartMenu",
       "WPFTweaksRemoveOneDrive",
-      "WPFTweaksDeBloat",
       "WPFTweaksWindowsAI",
       "WPFTweaksDisableStoreSearch"
     ]
   },
-  "win11debloat_args": "-Silent -RemoveApps -DisableTelemetry -DisableBing -DisableSuggestions -DisableLockscreenTips -RevertContextMenu -DisableWidgets -DisableCopilot -DisableDVR -DisableMouseAcceleration -DisableDesktopSpotlight -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSearchHistory -DisableDeliveryOptimization",
+  "win11debloat_args": "-Silent -RemoveApps -DisableTelemetry -DisableBing -DisableStoreSearchSuggestions -DisableSuggestions -DisableLockscreenTips -RevertContextMenu -DisableWidgets -DisableCopilot -DisableDVR -DisableMouseAcceleration -DisableDesktopSpotlight -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSearchHistory -DisableDeliveryOptimization",
   "registry_changes": [
     {
       "hive": "HKEY_CURRENT_USER",
@@ -100,8 +102,8 @@
       "hive": "HKEY_CURRENT_USER",
       "key_path": "Control Panel\\Desktop\\WindowMetrics",
       "name": "MinAnimate",
-      "value_type": "REG_DWORD",
-      "value": 0
+      "value_type": "REG_SZ",
+      "value": "0"
     },
     {
       "hive": "HKEY_CURRENT_USER",

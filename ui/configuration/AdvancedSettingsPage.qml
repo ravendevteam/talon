@@ -4,12 +4,15 @@ Item {
 	id: root
 	property var advancedArgs: []
 	property bool internetAvailable: true
+	property bool groupPolicyAvailable: false
 	property string interFontFamily: ""
 	property var localizer
 	signal importPlan()
 	signal importWinUtil()
 	signal editWin11Args()
 	signal editRegistryChanges()
+	signal editProgramPackages()
+	signal editGroupPolicyChanges()
 	signal exportPlan()
 	signal setBackground()
 	signal toggleArg(string key)
@@ -58,16 +61,20 @@ Item {
 				{"label": root.localizer.text("configuration.advanced.import_winutil"), "action": "importWinUtil"},
 				{"label": root.localizer.text("configuration.advanced.set_win11_args"), "action": "win11"},
 				{"label": root.localizer.text("configuration.advanced.edit_registry_changes"), "action": "registry"},
+				{"label": root.localizer.text("configuration.advanced.edit_program_packages"), "action": "programs"},
+				{"label": root.localizer.text("configuration.advanced.edit_group_policy_changes"), "action": "groupPolicy"},
 				{"label": root.localizer.text("configuration.advanced.export_plan"), "action": "export"},
 				{"label": root.localizer.text("configuration.advanced.set_background"), "action": "background"}
 			]
 
 			Rectangle {
+				property bool actionAvailable: modelData.action !== "groupPolicy" || root.groupPolicyAvailable
 				width: Math.min(Math.max(actionLabel.implicitWidth + 22, 120), advancedActionsRow.width)
 				height: Math.max(30, actionLabel.implicitHeight + 12)
 				color: actionMouse.containsMouse ? "#101010" : "#000000"
 				border.width: 1
 				border.color: "#2A2A2A"
+				opacity: actionAvailable ? 1.0 : 0.45
 
 				Text {
 					id: actionLabel
@@ -85,7 +92,8 @@ Item {
 					id: actionMouse
 					anchors.fill: parent
 					hoverEnabled: true
-					cursorShape: Qt.PointingHandCursor
+					enabled: parent.actionAvailable
+					cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 					onClicked: {
 						if (modelData.action === "importPlan")
 							root.importPlan()
@@ -95,6 +103,10 @@ Item {
 							root.editWin11Args()
 						else if (modelData.action === "registry")
 							root.editRegistryChanges()
+						else if (modelData.action === "programs")
+							root.editProgramPackages()
+						else if (modelData.action === "groupPolicy")
+							root.editGroupPolicyChanges()
 						else if (modelData.action === "export")
 							root.exportPlan()
 						else if (modelData.action === "background")
@@ -120,20 +132,37 @@ Item {
 
 		delegate: Item {
 			width: advancedArgsList.width
-			height: 42
-			property bool unavailableNoInternet: !root.internetAvailable && modelData.key === "browser-installation"
+			height: Math.max(42, optionLabels.implicitHeight + 12)
+			property bool unavailable: modelData.available === false || (!root.internetAvailable && (modelData.key === "browser-installation" || modelData.key === "program-installation"))
+			property string unavailableReason: modelData.unavailableReason || (unavailable ? root.localizer.text("configuration.advanced.internet_required") : "")
 
-			Text {
+			Column {
+				id: optionLabels
 				anchors.left: parent.left
 				anchors.right: valueButton.left
 				anchors.rightMargin: 12
 				anchors.verticalCenter: parent.verticalCenter
-				text: modelData.label
-				color: unavailableNoInternet ? "#7A7A7A" : "#FFFFFF"
-				font.family: root.interFontFamily
-				font.pixelSize: 16
-				wrapMode: Text.NoWrap
-				elide: Text.ElideRight
+				spacing: 3
+
+				Text {
+					width: parent.width
+					text: modelData.label
+					color: unavailable ? "#7A7A7A" : "#FFFFFF"
+					font.family: root.interFontFamily
+					font.pixelSize: 16
+					wrapMode: Text.NoWrap
+					elide: Text.ElideRight
+				}
+
+				Text {
+					width: parent.width
+					visible: unavailableReason.length > 0
+					text: unavailableReason
+					color: "#A0A0A0"
+					font.family: root.interFontFamily
+					font.pixelSize: 12
+					wrapMode: Text.WordWrap
+				}
 			}
 
 			Rectangle {
@@ -142,14 +171,14 @@ Item {
 				height: 28
 				anchors.right: parent.right
 				anchors.verticalCenter: parent.verticalCenter
-				color: unavailableNoInternet ? "#050505" : (valueMouse.containsMouse ? "#111111" : "#000000")
+				color: unavailable ? "#050505" : (valueMouse.containsMouse ? "#111111" : "#000000")
 				border.width: 1
-				border.color: unavailableNoInternet ? "#1A1A1A" : "#2A2A2A"
+				border.color: unavailable ? "#1A1A1A" : "#2A2A2A"
 
 				Text {
 					anchors.centerIn: parent
 					text: modelData.value ? root.localizer.text("configuration.advanced.true") : root.localizer.text("configuration.advanced.false")
-					color: unavailableNoInternet ? "#7A7A7A" : "#FFFFFF"
+					color: unavailable ? "#7A7A7A" : "#FFFFFF"
 					font.family: root.interFontFamily
 					font.pixelSize: 14
 				}
@@ -158,7 +187,7 @@ Item {
 					id: valueMouse
 					anchors.fill: parent
 					hoverEnabled: true
-					enabled: !unavailableNoInternet
+					enabled: !unavailable
 					cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 					onClicked: root.toggleArg(modelData.key)
 				}

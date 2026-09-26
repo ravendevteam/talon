@@ -18,7 +18,7 @@
             "configure_updates": "Windows-Update-Richtlinien werden konfiguriert...",
             "apply_background": "Desktop-Hintergrund wird festgelegt...",
             "dry_run_complete": "Testlauf abgeschlossen. Es wurden keine Systemänderungen vorgenommen.",
-            "complete_no_restart": "Installation abgeschlossen. Talon startet das System nicht automatisch neu."
+            "complete_no_restart": "Installation abgeschlossen."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "Die Liste auf der linken Seite zeigt alles, was Talon auf deinem System ausführen wird. Falls du etwas nicht möchtest, kannst du Elemente aus der Liste entfernen.\n\nWenn alles korrekt aussieht, wähle „Start“ aus.",
             "no_browser_warning": "Es wird kein Browser installiert.",
             "no_internet_info": "Keine Internetverbindung erkannt. Talon wird keinen Browser installieren.",
-            "no_updates_warning": "Die Update-Richtlinie wird nicht konfiguriert. Updates könnten Bloat wiederherstellen und einige Einstellungen von Talon rückgängig machen.",
             "nothing_to_do": "Der Debloat-Prozess kann nicht gestartet werden. Nichts zu tun.",
             "reset_defaults": "Auf Standardwerte zurücksetzen",
             "advanced": "Erweitert",
@@ -90,10 +89,6 @@
         "registry_tweaks": {
             "text": "Visuelle Desktop-Anpassungen vornehmen",
             "tooltip": "Ändert die Windows-Registrierung, um das Erscheinungsbild und Verhalten des Desktops zu verbessern, einschließlich, aber nicht beschränkt auf das Linksbündig-Ausrichten der Taskleiste, das Aktivieren des dunklen Designs, das Entfernen von Menüverzögerungen und das Anzeigen von Dateierweiterungen."
-        },
-        "configure_updates": {
-            "text": "Nur-Sicherheitsupdate-Richtlinie festlegen",
-            "tooltip": "Um zu verhindern, dass Windows-Updates erneut Bloat hinzufügen und Änderungen rückgängig machen, setzt Talon eine Update-Richtlinie, die nur Sicherheitsupdates zulässt und nicht sicherheitsrelevante „Funktions“-Updates ausschließt. Unter Windows Pro bleibt dies dauerhaft bestehen, unter Windows Home jedoch nur 365 Tage."
         },
         "apply_background": {
             "text": "Desktop-Hintergrund anwenden",

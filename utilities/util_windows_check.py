@@ -20,6 +20,28 @@ def _read_registry_value(name: str) -> str:
         raise
 
 
+def supports_group_policy(*, strict: bool = True) -> bool:
+    if sys.platform != "win32":
+        return False
+    try:
+        edition = _read_registry_value("EditionID").strip().casefold()
+    except Exception:
+        logger.warning("Unable to determine Group Policy availability", exc_info=True)
+        if strict:
+            raise
+        return False
+    supported = edition in {
+        "professional", "professionaln", "professionaleducation",
+        "professionaleducationn", "professionalworkstation", "professionalworkstationn",
+        "enterprise", "enterprisen", "enterprises", "enterprisesn",
+        "enterpriseg", "enterprisegn", "education", "educationn",
+        "iotenterprise", "iotenterprises",
+    }
+    if strict and not supported and edition not in {"core", "coren", "coresinglelanguage", "corecountryspecific"}:
+        raise ValueError(f"Unrecognized Windows edition: {edition}")
+    return supported
+
+
 
 def check_windows_11_home_or_pro() -> str:
     if sys.platform != "win32":
@@ -52,4 +74,4 @@ def check_windows_11_home_or_pro() -> str:
 
 if __name__ == "__main__":
     ed = check_windows_11_home_or_pro()
-    print(f"Windows 11 {ed} detected. Continuing…")
+    logger.info(f"Windows 11 {ed} detected. Continuing…")

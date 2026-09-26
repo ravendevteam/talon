@@ -5,6 +5,8 @@ from copy import deepcopy
 
 from PyQt5.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 
+from utilities.util_logger import logger
+
 
 DEFAULT_LANGUAGE = "en"
 
@@ -50,8 +52,10 @@ def _load_catalog(language: str) -> dict:
         with open(path, "r", encoding="utf-8") as f:
             catalog = json.load(f)
         if not isinstance(catalog, dict):
+            logger.warning("Locale catalog must contain a JSON object: %s", path)
             catalog = {}
     except Exception:
+        logger.warning("Unable to load locale catalog: %s", path, exc_info=True)
         catalog = {}
     _catalog_cache[language] = catalog
     return catalog
@@ -61,6 +65,7 @@ def available_languages() -> list:
     out = []
     root = locales_dir()
     if not os.path.isdir(root):
+        logger.warning("Locale directory is unavailable: %s", root)
         return out
     names = sorted(os.listdir(root), key=lambda name: (name != f"{DEFAULT_LANGUAGE}.json", name.lower()))
     for name in names:
@@ -85,6 +90,7 @@ def set_language(language: str) -> bool:
     language = str(language or DEFAULT_LANGUAGE)
     path = os.path.join(locales_dir(), f"{language}.json")
     if not os.path.isfile(path):
+        logger.warning("Cannot select language %r; locale catalog is unavailable: %s", language, path)
         return False
     _current_language = language
     _load_catalog(language)
@@ -108,6 +114,7 @@ def t(key: str, params=None) -> str:
     try:
         return value.format(**params)
     except Exception:
+        logger.warning("Unable to format translation %r for language %r", key, _current_language, exc_info=True)
         return value
 
 

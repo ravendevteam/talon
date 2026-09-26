@@ -124,6 +124,15 @@ Window {
 				advancedDialog.openDialog(localizer.text("configuration.dialogs.registry_changes_title"), bridge.getRegistryChangesText(), "registry-changes")
 			}
 
+			function openProgramPackagesDialog() {
+				advancedDialog.openDialog(localizer.text("configuration.dialogs.program_packages_title"), bridge.getChocolateyPackagesText(), "program-packages", "configuration.dialogs.program_packages_help")
+			}
+
+			function openGroupPolicyChangesDialog() {
+				if (bridge.isGroupPolicyAvailable())
+					advancedDialog.openDialog(localizer.text("configuration.dialogs.group_policy_changes_title"), bridge.getGroupPolicyChangesText(), "group-policy", "configuration.dialogs.group_policy_changes_help")
+			}
+
 			onVisibleChanged: {
 				if (visible) {
 					showBrowserSelection = false
@@ -146,6 +155,10 @@ Window {
 							advancedDialog.titleText = localizer.text("configuration.dialogs.win11_args_title")
 						else if (advancedDialog.mode === "registry-changes")
 							advancedDialog.titleText = localizer.text("configuration.dialogs.registry_changes_title")
+						else if (advancedDialog.mode === "program-packages")
+							advancedDialog.titleText = localizer.text("configuration.dialogs.program_packages_title")
+						else if (advancedDialog.mode === "group-policy")
+							advancedDialog.titleText = localizer.text("configuration.dialogs.group_policy_changes_title")
 					}
 				}
 			}
@@ -277,6 +290,7 @@ Window {
 				visible: opacity > 0.0
 				advancedArgs: readyPage.advancedArgs
 				internetAvailable: window.internetAvailable
+				groupPolicyAvailable: bridge.isGroupPolicyAvailable()
 				interFontFamily: interFont.name
 				localizer: localizer
 				Behavior on opacity { NumberAnimation { duration: 500 } }
@@ -290,6 +304,8 @@ Window {
 				}
 				onEditWin11Args: readyPage.openWin11ArgsDialog()
 				onEditRegistryChanges: readyPage.openRegistryChangesDialog()
+				onEditProgramPackages: readyPage.openProgramPackagesDialog()
+				onEditGroupPolicyChanges: readyPage.openGroupPolicyChangesDialog()
 				onExportPlan: bridge.exportInstallPlan()
 				onSetBackground: {
 					bridge.setAppliedBackground()
@@ -318,6 +334,10 @@ Window {
 						ok = bridge.saveWin11DebloatArgsText(text)
 					else if (mode === "registry-changes")
 						ok = bridge.saveRegistryChangesText(text)
+					else if (mode === "program-packages")
+						ok = bridge.saveChocolateyPackagesText(text)
+					else if (mode === "group-policy")
+						ok = bridge.saveGroupPolicyChangesText(text)
 					if (ok) {
 						advancedDialog.closeDialog()
 						window.refreshPlanViews()

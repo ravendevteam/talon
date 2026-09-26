@@ -18,7 +18,7 @@
             "configure_updates": "Configuration des politiques des mises à jour Windows...",
             "apply_background": "Définition d'un arrière-plan...",
             "dry_run_complete": "Essai terminé. Aucune modification du système n’a été effectuée.",
-            "complete_no_restart": "Installation terminée. Talon ne redémarrera pas le système automatiquement."
+            "complete_no_restart": "Installation terminée."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "La liste à gauche montre tout ce que Talon va faire sur votre système.S’il y a quelque chose que vous ne voulez pas qu’il fasse, vous pouvez supprimer des éléments de la liste.\n\nSi tout vous semble bon, sélectionnez \"Démarrer.\"",
             "no_browser_warning": "Aucun navigateur ne sera installé.",
             "no_internet_info": "Vous n'êtes pas connecté à internet. Talon ne va pas installer le navigateur.",
-            "no_updates_warning": "La stratégie de mise à jour ne sera pas configurée. Les mises à jour peuvent restaurer le blocage et annuler certains paramètres de Talon.",
             "nothing_to_do": "Désencombrement impossible. Aucune tâche.",
             "reset_defaults": "Réinitialiser les paramètres par défaut",
             "advanced": "Avancé",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Exécution des ajustements visuels du bureau",
             "tooltip": "Modifie le Registre Windows pour améliorer l'apparence et la prise en main de votre bureau, y compris, mais sans s’y limiter, la modification de votre barre des tâches pour qu’elle soit alignée à gauche, la définition de votre thème en thème sombre, la suppression du retard dans les menus et l’affichage des extensions de fichiers."
-        },
-        "configure_updates": {
-            "text": "Définir une stratégie de mise à jour de sécurité uniquement",
-            "tooltip": "Afin d’éviter que les mises à jour de Windows ne réintroduisent des blocages et annulent les modifications apportées, Talon définit une stratégie de mise à jour sur votre système qui entraîne la réception exclusive des mises à jour de sécurité, en omettant les mises à jour non liées à la sécurité \"feature\". Il dure de façon permanente sur Windows Pro, mais seulement 365 jours sur Windows Home."
         },
         "apply_background": {
             "text": "Application de l’arrière-plan du bureau",

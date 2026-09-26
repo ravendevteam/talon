@@ -4,13 +4,51 @@ import json
 import ssl
 import tempfile
 import glob
+import re
+import shlex
 import urllib.request
 import urllib.parse
 from configuration_components import step_catalog
+from configuration_components.config_validation import (
+    normalize_win11debloat_args_text,
+    normalize_winutil_config,
+    validate_winutil_selections,
+)
 from configuration_components.localization import t
+from utilities.util_json import load_json_file
 from utilities.util_logger import logger
 from utilities.util_powershell_handler import run_powershell_command
-from utilities.util_error_popup import show_error_popup
+from utilities.util_error_popup import record_warning, show_error_popup
+
+
+def _split_arguments(value):
+    if isinstance(value, list):
+        normalize_win11debloat_args_text(value)
+        return list(value)
+    lexer = shlex.shlex(normalize_win11debloat_args_text(value), posix=True)
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    lexer.escape = ""
+    return list(lexer)
+
+
+def _powershell_literal(value):
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def _script_command(path, arguments):
+    tokens = []
+    for argument in arguments:
+        if re.fullmatch(r"-[A-Za-z][A-Za-z0-9]*(?::\$(?:true|false))?", argument, re.IGNORECASE):
+            tokens.append(argument)
+        else:
+            tokens.append(_powershell_literal(argument))
+    invocation = "& " + _powershell_literal(path) + " " + " ".join(tokens)
+    return (
+        "$LASTEXITCODE = 0; try { " + invocation
+        + "; if (-not $?) { if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; exit 1 }; exit 0 } "
+        "catch { Write-Error -ErrorRecord $_ -ErrorAction Continue; exit 1 }"
+    )
 
 
 def _is_url(value: str) -> bool:
@@ -18,6 +56,7 @@ def _is_url(value: str) -> bool:
         p = urllib.parse.urlparse(value)
         return p.scheme in ("http", "https") and bool(p.netloc)
     except Exception:
+        logger.debug("Unable to parse config location as a URL: %r", value, exc_info=True)
         return False
 
 
@@ -29,12 +68,13 @@ def _download_config(url: str) -> str:
             import certifi
             ctx = ssl.create_default_context(cafile=certifi.where())
         except Exception:
+            logger.warning("Unable to load bundled CA certificates; using system certificates", exc_info=True)
             ctx = ssl.create_default_context()
     request = urllib.request.Request(url, headers={"User-Agent": "Talon/1.0"})
     with urllib.request.urlopen(request, timeout=30, context=ctx) as resp:
         data = resp.read()
     try:
-        json.loads(data.decode("utf-8-sig"))
+        json.loads(data)
     except Exception as e:
         raise RuntimeError(t("errors.downloaded_config_invalid", {"error": e}))
     fd, tmp_path = tempfile.mkstemp(prefix="talon_config_", suffix=".json")
@@ -46,8 +86,7 @@ def _download_config(url: str) -> str:
 
 def _load_json_config(path: str, label: str):
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:
-            return json.load(f)
+        return load_json_file(path)
     except Exception as e:
         logger.error(f"Failed to load {label} config: {e}")
         try:
@@ -56,7 +95,7 @@ def _load_json_config(path: str, label: str):
                 allow_continue=False,
             )
         except Exception:
-            pass
+            logger.exception("Failed to report installation error")
         sys.exit(1)
 
 
@@ -69,90 +108,45 @@ def _write_temp_config(data, prefix: str) -> str:
 
 
 def _normalize_winutil_tweaks(value):
-    if isinstance(value, list):
-        cleaned = []
-        seen = set()
-        for item in value:
-            if not isinstance(item, str):
-                continue
-            name = item.strip()
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            cleaned.append(name)
-        return cleaned if cleaned else None
-    if isinstance(value, dict):
-        if "WinUtil" in value:
-            return _normalize_winutil_tweaks(value.get("WinUtil"))
-        if isinstance(value.get("WPFTweaks"), list):
-            return _normalize_winutil_tweaks(value.get("WPFTweaks"))
-    return None
+    return normalize_winutil_config(value)["WPFTweaks"]
 
 
 def _extract_winutil_config(data):
     if isinstance(data, list):
         return _normalize_winutil_tweaks(data)
     if not isinstance(data, dict):
-        return None
-    if "winutil_config" in data:
-        value = data.get("winutil_config")
-        if isinstance(value, dict) and "payload" in value:
-            value = value.get("payload")
-        normalized = _normalize_winutil_tweaks(value)
-        if normalized is None:
-            logger.warning("install_plan winutil_config is not in a supported format; ignoring.")
-        return normalized
-    if "WinUtil" in data:
-        normalized = _normalize_winutil_tweaks(data.get("WinUtil"))
-        if normalized is None:
-            logger.warning("WinUtil config is not in a supported format; ignoring.")
-        return normalized
-    if "Win11Debloat" in data:
-        winutil_data = {key: value for key, value in data.items() if key != "Win11Debloat"}
-        return _normalize_winutil_tweaks(winutil_data)
-    return _normalize_winutil_tweaks(data)
+        raise ValueError("External configuration must be an object or a WinUtil selection list.")
+    if any(key in data for key in ("winutil_config", "WinUtil", "payload")):
+        return _normalize_winutil_tweaks(data)
+    if any(key in data for key in ("WPFTweaks", "WPFInstall", "WPFFeature", "WPFAppx", "WPFToggle", "Install")):
+        selections = {key: value for key, value in data.items()
+                      if key not in ("win11debloat_args", "Win11Debloat")}
+        return _normalize_winutil_tweaks(selections)
+    return None
 
 
 def _extract_win11debloat_args(data):
     if not isinstance(data, dict):
-        return None
+        if isinstance(data, list):
+            return None
+        raise ValueError("External configuration must be an object or a WinUtil selection list.")
     if "win11debloat_args" in data:
-        value = data.get("win11debloat_args")
-        if isinstance(value, str):
-            parsed = [part for part in value.split() if part]
-            return parsed
-        if isinstance(value, list):
-            cleaned = [arg for arg in value if isinstance(arg, str)]
-            if len(cleaned) != len(value):
-                logger.warning("install_plan win11debloat_args contain non-string entries; ignoring invalid entries.")
-            return cleaned
-        logger.warning("install_plan win11debloat_args are not a string or list; ignoring.")
-        return None
+        return _split_arguments(data["win11debloat_args"])
     if "Win11Debloat" not in data:
         return None
     win11 = data["Win11Debloat"]
     if isinstance(win11, dict):
+        if len(win11) != 1 or not set(win11).issubset({"Args", "args"}):
+            raise ValueError("Win11Debloat configuration supports only one Args or args field.")
         if "Args" in win11:
             args = win11["Args"]
         elif "args" in win11:
             args = win11["args"]
         else:
-            return None
+            raise ValueError("Win11Debloat configuration must contain Args or args.")
     else:
         args = win11
-    if isinstance(args, list):
-        if not args:
-            return []
-        cleaned = [arg for arg in args if isinstance(arg, str)]
-        if len(cleaned) != len(args):
-            logger.warning("Win11Debloat args contain non-string entries; ignoring invalid entries.")
-        if cleaned:
-            return cleaned
-        return None
-    if isinstance(args, str):
-        return [args]
-    logger.warning("Win11Debloat args are not a list or string; ignoring.")
-    return None
+    return _split_arguments(args)
 
 
 def _prepare_context(config_path=None):
@@ -173,7 +167,7 @@ def _prepare_context(config_path=None):
                     allow_continue=False,
                 )
             except Exception:
-                pass
+                logger.exception("Failed to report installation error")
             sys.exit(1)
 
     user_config = None
@@ -186,9 +180,11 @@ def _prepare_context(config_path=None):
                     allow_continue=False,
                 )
             except Exception:
-                pass
+                logger.exception("Failed to report installation error")
             sys.exit(1)
         user_config = _load_json_config(config_path, "custom")
+        if not isinstance(user_config, (dict, list)):
+            raise ValueError("External configuration must be an object or a WinUtil selection list.")
         logger.info(f"Using custom config: {config_path}")
     else:
         logger.info("Using embedded defaults from install_plan/runtime.")
@@ -207,8 +203,6 @@ def run_winutil(config_path=None):
     if winutil_config is None:
         winutil_config = step_catalog.default_winutil_tweaks()
 
-    winutil_config_path = _write_temp_config(winutil_config, "talon_winutil_")
-    logger.info(f"Using WinUtil config: {winutil_config_path}")
     winutil_path = os.path.join(base_path, "external_scripts", "winutil.ps1")
     if not os.path.exists(winutil_path):
         logger.error(f"Bundled WinUtil script not found: {winutil_path}")
@@ -218,28 +212,30 @@ def run_winutil(config_path=None):
                 allow_continue=False,
             )
         except Exception:
-            pass
+            logger.exception("Failed to report installation error")
         sys.exit(1)
 
-    cmd = f"& '{winutil_path}' -Config '{winutil_config_path}' -Run -NoUI"
     logger.info("Executing ChrisTitusTech WinUtil")
+    winutil_config = validate_winutil_selections(winutil_path, winutil_config)
+    winutil_config_path = _write_temp_config(winutil_config, "talon_winutil_")
+    logger.info(f"Using WinUtil config: {winutil_config_path}")
     try:
-        run_powershell_command(
-            cmd,
-            monitor_output=True,
-            termination_str="Tweaks are Finished",
-        )
-        logger.info("Successfully executed ChrisTitusTech WinUtil")
+        run_powershell_command(_script_command(winutil_path, ["-Config", winutil_config_path]))
     except Exception as e:
-        logger.error(f"Failed to execute ChrisTitusTech WinUtil: {e}")
+        logger.exception("Failed to execute ChrisTitusTech WinUtil")
+        show_error_popup(t("errors.winutil_failed", {"error": e}), allow_continue=True)
+        logger.warning("Continuing after incomplete ChrisTitusTech WinUtil execution")
+        return False
+    finally:
         try:
-            show_error_popup(
-                t("errors.winutil_failed", {"error": e}),
-                allow_continue=False,
-            )
+            os.remove(winutil_config_path)
+        except FileNotFoundError:
+            logger.debug("WinUtil temporary configuration was already removed: %s", winutil_config_path)
         except Exception:
-            pass
-        sys.exit(1)
+            logger.warning("Unable to remove WinUtil temporary configuration %s", winutil_config_path, exc_info=True)
+            record_warning()
+    logger.info("Successfully executed ChrisTitusTech WinUtil")
+    return True
 
 
 def run_win11debloat(config_path=None):
@@ -257,6 +253,8 @@ def run_win11debloat(config_path=None):
     candidates = sorted(
         glob.glob(os.path.join(base_path, "external_scripts", "Raphire-Win11Debloat-*", "Win11Debloat.ps1"))
     )
+    if len(candidates) > 1:
+        raise ValueError("Expected exactly one Win11Debloat bundle in external_scripts.")
     if candidates:
         win11debloat_path = candidates[-1]
     if not os.path.exists(win11debloat_path):
@@ -267,33 +265,30 @@ def run_win11debloat(config_path=None):
                 allow_continue=False,
             )
         except Exception:
-            pass
+            logger.exception("Failed to report installation error")
         sys.exit(1)
-
-    cmd = f"& '{win11debloat_path}'"
-    if win11debloat_args:
-        cmd = f"{cmd} {' '.join(win11debloat_args)}"
 
     logger.info("Executing Raphi Win11Debloat")
+    if not win11debloat_args:
+        raise ValueError("Win11Debloat requires at least one argument for an enabled step.")
     try:
-        run_powershell_command(cmd)
-        logger.info("Successfully executed Raphi Win11Debloat")
+        run_powershell_command(_script_command(win11debloat_path, win11debloat_args))
     except Exception as e:
-        logger.error(f"Failed to execute Raphi Win11Debloat: {e}")
-        try:
-            show_error_popup(
-                t("errors.win11debloat_failed", {"error": e}),
-                allow_continue=False,
-            )
-        except Exception:
-            pass
-        sys.exit(1)
+        logger.exception("Failed to execute Raphi Win11Debloat")
+        show_error_popup(t("errors.win11debloat_failed", {"error": e}), allow_continue=True)
+        logger.warning("Continuing after incomplete Raphi Win11Debloat execution")
+        return False
+    logger.info("Successfully executed Raphi Win11Debloat")
+    return True
 
 
 def main(config_path=None):
-    run_winutil(config_path)
-    run_win11debloat(config_path)
-    logger.info("All external debloat scripts executed successfully.")
+    winutil_complete = run_winutil(config_path)
+    win11debloat_complete = run_win11debloat(config_path)
+    if winutil_complete and win11debloat_complete:
+        logger.info("All external debloat scripts executed successfully.")
+    else:
+        logger.warning("External debloat scripts finished with warnings.")
 
 
 if __name__ == "__main__":

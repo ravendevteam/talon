@@ -19,8 +19,8 @@ def main(applied_background_path=None):
     if not os.path.exists(wallpaper_path):
         msg = t("errors.wallpaper_not_found", {"path": wallpaper_path})
         logger.error(msg)
-        show_error_popup(msg, allow_continue=False)
-        sys.exit(1)
+        show_error_popup(msg, allow_continue=True)
+        return
     SPI_SETDESKWALLPAPER = 20
     SPIF_UPDATEINIFILE   = 0x01
     SPIF_SENDCHANGE      = 0x02
@@ -36,8 +36,8 @@ def main(applied_background_path=None):
         logger.info("Desktop background set successfully.")
     except Exception as e:
         logger.error(f"Failed to set desktop background: {e}")
-        show_error_popup(t("errors.desktop_background_failed", {"error": e}), allow_continue=False)
-        sys.exit(1)
+        show_error_popup(t("errors.desktop_background_failed", {"error": e}), allow_continue=True)
+        return
 
 
 

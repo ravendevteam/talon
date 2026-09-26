@@ -1,13 +1,23 @@
 import json
 import os
-import re
 import tempfile
 
 import debloat_components.debloat_registry_tweaks as debloat_registry_tweaks
+from debloat_components.debloat_group_policy import normalize_group_policy_changes
 from configuration_components import step_catalog
+from configuration_components.config_validation import normalize_winutil_config, normalize_win11debloat_args_text
+from configuration_components.localization import t
+from utilities.util_chocolatey import normalize_chocolatey_packages
+from utilities.util_json import load_json_file
+from utilities.util_logger import logger
+from utilities.util_windows_check import supports_group_policy as group_policy_available
 
 
 INSTALL_PLAN_VERSION = 1
+
+
+class InstallPlanError(ValueError):
+    pass
 
 
 def talon_dir() -> str:
@@ -19,79 +29,88 @@ def install_plan_path() -> str:
 
 
 def metadata_keys() -> tuple:
-    return ("winutil_config", "win11debloat_args", "registry_changes", "applied_background_path")
+    return ("winutil_config", "win11debloat_args", "registry_changes", "applied_background_path",
+            "chocolatey_packages", "group_policy_changes")
 
 
 def default_registry_changes():
-    try:
-        return debloat_registry_tweaks.default_registry_changes_payload()
-    except Exception:
-        return []
-
-
-def normalize_win11debloat_args_text(text: str) -> str:
-    return re.sub(r"\s+", " ", str(text).strip())
+    return debloat_registry_tweaks.default_registry_changes_payload()
 
 
 def format_win11debloat_args_for_editor(value) -> str:
-    if isinstance(value, list):
-        cleaned = [str(v).strip() for v in value if str(v).strip()]
-        return "\n".join(cleaned)
-    compact = re.sub(r"\s+", " ", str(value).strip())
-    if not compact:
-        return ""
-    return "\n".join([part for part in compact.split(" ") if part])
-
-
-def normalize_winutil_config(value):
-    if isinstance(value, dict) and "payload" in value:
-        payload = value.get("payload")
-        if isinstance(payload, (dict, list)):
-            value = payload
-    if isinstance(value, dict) and "WinUtil" in value and isinstance(value["WinUtil"], dict):
-        value = value["WinUtil"]
-    if isinstance(value, list):
-        tweaks = [str(v).strip() for v in value if str(v).strip()]
-        return {"WPFTweaks": tweaks}
-    if isinstance(value, dict):
-        normalized = {}
-        for key, raw_val in value.items():
-            if key == "WPFTweaks" and isinstance(raw_val, list):
-                normalized[key] = [str(v).strip() for v in raw_val if str(v).strip()]
-            else:
-                normalized[key] = raw_val
-        return normalized
-    return step_catalog.default_winutil_config()
+    return "\n".join(normalize_win11debloat_args_text(value).split())
 
 
 def normalize_registry_changes(value):
-    if value is None:
-        return default_registry_changes()
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return default_registry_changes()
-        try:
-            value = json.loads(stripped)
-        except Exception:
-            return default_registry_changes()
-    if isinstance(value, (dict, list)):
-        return value
-    return default_registry_changes()
+    return debloat_registry_tweaks.normalize_registry_changes(value)
+
+
+def _normalize_background_path(value):
+    if not isinstance(value, str) or "\0" in value:
+        raise ValueError("applied_background_path must be a file path string.")
+    return value.strip()
 
 
 def normalize_metadata_fields(data: dict):
     if not isinstance(data, dict):
-        return
-    data["winutil_config"] = normalize_winutil_config(data.get("winutil_config"))
-    args_raw = data.get("win11debloat_args", step_catalog.default_win11debloat_args_text())
-    if isinstance(args_raw, list):
-        args_raw = " ".join([str(v).strip() for v in args_raw if str(v).strip()])
-    data["win11debloat_args"] = normalize_win11debloat_args_text(
-        args_raw if str(args_raw).strip() else step_catalog.default_win11debloat_args_text()
+        raise ValueError("Install plan must be a JSON object.")
+    enabled = {item["key"] for item in _normalize_plan_items(data.get("items", [])) if item["enabled"]}
+    fields = (
+        ("winutil_config", "debloat-windows-phase-one", normalize_winutil_config, step_catalog.default_winutil_config()),
+        ("win11debloat_args", "debloat-windows-phase-two", normalize_win11debloat_args_text, step_catalog.default_win11debloat_args_text()),
+        ("registry_changes", "registry-tweaks", normalize_registry_changes, None),
+        ("applied_background_path", "apply-background", _normalize_background_path, ""),
+        ("chocolatey_packages", "program-installation", normalize_chocolatey_packages, []),
+        ("group_policy_changes", "group-policy", normalize_group_policy_changes, []),
     )
-    data["registry_changes"] = normalize_registry_changes(data.get("registry_changes"))
-    data["applied_background_path"] = str(data.get("applied_background_path", "")).strip()
+    for field, step, normalize, default in fields:
+        value = data.get(field, default)
+        try:
+            value = normalize(value)
+            if step in enabled:
+                if field == "applied_background_path":
+                    if value and not os.path.isfile(value):
+                        raise ValueError(f"Background image does not exist: {value}")
+                elif not value or (field == "winutil_config" and not value.get("WPFTweaks")):
+                    raise ValueError(f"{field} must contain at least one entry for an enabled step.")
+        except ValueError as error:
+            if step in enabled:
+                raise ValueError(f"Invalid data for '{step}': {error}") from error
+            logger.debug("Preserving invalid %s data for disabled step %r", field, step, exc_info=True)
+        data[field] = value
+    if "browser-installation" in enabled:
+        package = data.get("selected_browser_package", "")
+        data["selected_browser_package"] = normalize_chocolatey_packages([package])[0]
+    data["include_browser_install"] = "browser-installation" in enabled
+
+
+def validate_enabled_step_data(data: dict):
+    normalize_metadata_fields(data)
+    if is_item_enabled(data, "group-policy") and not group_policy_available():
+        raise ValueError(t("configuration.advanced.group_policy_unavailable"))
+
+
+def step_unavailable_reason(key: str, data: dict, internet_available: bool = True) -> str:
+    if key in ("browser-installation", "program-installation") and not internet_available:
+        return t("configuration.advanced.internet_required")
+    if key == "browser-installation" and not data.get("selected_browser_package"):
+        return t("configuration.advanced.browser_required")
+    if key == "program-installation" and not data.get("chocolatey_packages"):
+        return t("configuration.advanced.program_packages_required")
+    if key == "group-policy":
+        if not group_policy_available():
+            return t("configuration.advanced.group_policy_unavailable")
+        if not data.get("group_policy_changes"):
+            return t("configuration.advanced.group_policy_changes_required")
+    return ""
+
+
+def apply_step_availability(data: dict, internet_available: bool = True):
+    for item in data.get("items", []):
+        normalize_item(item)
+        if isinstance(item, dict) and step_unavailable_reason(item.get("key", ""), data, internet_available):
+            item["enabled"] = False
+    data["include_browser_install"] = is_item_enabled(data, "browser-installation")
 
 
 def copy_metadata_value(value):
@@ -103,17 +122,15 @@ def build_install_plan(
     browser_package: str = "",
     include_browser_install: bool = False,
     preset_key: str = step_catalog.STANDARD_PRESET_KEY,
+    internet_available: bool = True,
 ) -> dict:
     preset = step_catalog.preset_by_key(preset_key)
     preset_plan = copy_metadata_value(preset.get("plan", {}))
-    preset_items = {}
-    for raw in preset_plan.get("items", []):
-        if isinstance(raw, dict) and str(raw.get("key", "")).strip():
-            preset_items[str(raw.get("key", "")).strip()] = raw
+    preset_items = {item["key"]: item for item in _normalize_plan_items(preset_plan.get("items"))}
     items = []
     for slug in step_catalog.BOOL_OPTION_SLUGS + step_catalog.STEP_SLUGS:
         raw_item = preset_items.get(slug, {})
-        enabled = bool(raw_item.get("enabled", False if slug in step_catalog.BOOL_OPTION_SLUGS else True))
+        enabled = normalize_item(raw_item)["enabled"] if raw_item else False
         item = {
             "key": slug,
             "text": str(raw_item.get("text", "")),
@@ -125,12 +142,10 @@ def build_install_plan(
         items.append(item)
     winutil_config = copy_metadata_value(preset_plan.get("winutil_config", step_catalog.default_winutil_config()))
     win11debloat_args = copy_metadata_value(preset_plan.get("win11debloat_args", step_catalog.default_win11debloat_args_text()))
-    if isinstance(win11debloat_args, list):
-        win11debloat_args = " ".join([str(v).strip() for v in win11debloat_args if str(v).strip()])
     registry_changes = copy_metadata_value(preset_plan.get("registry_changes", None))
     if registry_changes is None:
         registry_changes = default_registry_changes()
-    return {
+    plan = {
         "version": INSTALL_PLAN_VERSION,
         "selected_preset_key": str(preset.get("key", step_catalog.STANDARD_PRESET_KEY)),
         "selected_browser_name": browser_name,
@@ -138,28 +153,55 @@ def build_install_plan(
         "include_browser_install": is_item_enabled({"items": items}, "browser-installation"),
         "items": items,
         "winutil_config": winutil_config,
-        "win11debloat_args": normalize_win11debloat_args_text(win11debloat_args),
+        "win11debloat_args": win11debloat_args,
         "registry_changes": registry_changes,
-        "applied_background_path": str(preset_plan.get("applied_background_path", "")).strip(),
+        "applied_background_path": preset_plan.get("applied_background_path", ""),
+        "chocolatey_packages": copy_metadata_value(preset_plan.get("chocolatey_packages", [])),
+        "group_policy_changes": copy_metadata_value(preset_plan.get("group_policy_changes", [])),
     }
+    normalize_metadata_fields(plan)
+    apply_step_availability(plan, internet_available=internet_available)
+    return plan
 
 
 def normalize_item(item) -> dict:
     if isinstance(item, dict):
+        if not isinstance(item.get("key"), str) or not item["key"].strip():
+            raise ValueError("Every install plan item must have a nonempty string key.")
+        key = item["key"].strip()
+        if type(item.get("enabled", False)) is not bool:
+            raise ValueError(f"Install plan step '{key}' requires a boolean enabled value.")
         return {
-            "key": str(item.get("key", "")),
+            "key": key,
             "text": str(item.get("text", "")),
             "tooltip": str(item.get("tooltip", "")),
             "enabled": bool(item.get("enabled", False)),
         }
-    return {"key": "", "text": str(item), "tooltip": "", "enabled": False}
+    raise ValueError("Every install plan item must be a JSON object.")
 
 
-def normalize_imported_plan(payload: dict) -> dict:
+def _normalize_plan_items(items) -> list:
+    if not isinstance(items, list):
+        raise ValueError("Install plan field 'items' must be a list.")
+    known = step_catalog.BOOL_OPTION_SLUGS + step_catalog.STEP_SLUGS
+    by_key = {}
+    for raw in items:
+        item = normalize_item(raw)
+        key = item["key"]
+        if key in by_key:
+            raise ValueError(f"Install plan contains duplicate step '{key}'.")
+        if item["enabled"] and key not in known:
+            raise ValueError(f"Unknown enabled install plan step: '{key}'.")
+        by_key[key] = item
+    return [by_key.pop(key, {"key": key, "text": "", "tooltip": "", "enabled": False})
+            for key in known] + list(by_key.values())
+
+
+def normalize_imported_plan(payload: dict, step_overrides: dict = None) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Install plan must be a JSON object.")
     incoming_version = payload.get("version", INSTALL_PLAN_VERSION)
-    if not isinstance(incoming_version, int):
+    if type(incoming_version) is not int:
         raise ValueError("Install plan field 'version' must be an integer.")
     if incoming_version < 1:
         raise ValueError("Install plan field 'version' must be >= 1.")
@@ -168,112 +210,68 @@ def normalize_imported_plan(payload: dict) -> dict:
     if not isinstance(payload.get("items"), list):
         raise ValueError("Install plan field 'items' must be a list.")
 
-    normalized = build_install_plan(
-        browser_name=str(payload.get("selected_browser_name", "None")),
-        browser_package=str(payload.get("selected_browser_package", "")),
-        include_browser_install=bool(payload.get("include_browser_install", False)),
-        preset_key=str(payload.get("selected_preset_key", step_catalog.STANDARD_PRESET_KEY)),
-    )
-    normalized["selected_preset_key"] = str(payload.get("selected_preset_key", normalized.get("selected_preset_key", step_catalog.STANDARD_PRESET_KEY)))
-    normalized["version"] = incoming_version
-    default_keys = {item["key"] for item in normalized["items"]}
-    imported_by_key = {}
-    unknown_items = []
-    for raw in payload.get("items", []):
-        n = normalize_item(raw)
-        if not n["key"]:
-            continue
-        if n["key"] in default_keys:
-            imported_by_key[n["key"]] = n
-        else:
-            unknown_items.append(n)
-
-    for item in normalized["items"]:
-        imported = imported_by_key.get(item["key"])
-        if imported is None:
-            continue
-        item["enabled"] = bool(imported["enabled"])
-    normalized["items"].extend(unknown_items)
-    if not normalized["selected_browser_package"]:
-        set_item_enabled_for_preset(normalized, "browser-installation", False)
-    normalized["include_browser_install"] = is_item_enabled(normalized, "browser-installation")
+    normalized = {
+        "version": incoming_version,
+        "selected_preset_key": str(payload.get("selected_preset_key", "custom")),
+        "selected_browser_name": str(payload.get("selected_browser_name", "None")),
+        "selected_browser_package": payload.get("selected_browser_package", ""),
+        "items": _normalize_plan_items(payload["items"]),
+    }
+    if step_overrides:
+        for item in normalized["items"]:
+            if item["key"] in step_overrides:
+                item["enabled"] = step_overrides[item["key"]]
     for key in metadata_keys():
         if key in payload:
             normalized[key] = payload.get(key)
-    normalize_metadata_fields(normalized)
+    validate_enabled_step_data(normalized)
     return normalized
 
 
 def ensure_install_plan_file():
-    os.makedirs(talon_dir(), exist_ok=True)
     path = install_plan_path()
-    if not os.path.isfile(path):
+    try:
+        os.stat(path)
+    except FileNotFoundError:
         save_install_plan(build_install_plan())
         return
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, dict):
-            raise ValueError("plan root must be an object")
-        items = data.get("items", [])
-        if not isinstance(items, list):
-            raise ValueError("install plan items is not a list")
-        normalized = build_install_plan(
-            browser_name=str(data.get("selected_browser_name", "None")),
-            browser_package=str(data.get("selected_browser_package", "")),
-            include_browser_install=bool(data.get("include_browser_install", False)),
-            preset_key=str(data.get("selected_preset_key", step_catalog.STANDARD_PRESET_KEY)),
-        )
-        normalized["selected_preset_key"] = str(data.get("selected_preset_key", normalized.get("selected_preset_key", step_catalog.STANDARD_PRESET_KEY)))
-        existing_version = data.get("version", INSTALL_PLAN_VERSION)
-        normalized["version"] = existing_version if isinstance(existing_version, int) and existing_version >= 1 else INSTALL_PLAN_VERSION
-        existing_enabled_by_key = {}
-        for raw in items:
-            n = normalize_item(raw)
-            if n["key"]:
-                existing_enabled_by_key[n["key"]] = bool(n["enabled"])
-        for item in normalized["items"]:
-            if item["key"] in existing_enabled_by_key:
-                item["enabled"] = existing_enabled_by_key[item["key"]]
-        if not normalized["selected_browser_package"]:
-            set_item_enabled_for_preset(normalized, "browser-installation", False)
-        normalized["include_browser_install"] = is_item_enabled(normalized, "browser-installation")
-        for key in metadata_keys():
-            if key in data:
-                normalized[key] = data.get(key)
-        normalize_metadata_fields(normalized)
-        save_install_plan(normalized)
-    except Exception:
-        save_install_plan(build_install_plan())
+    load_install_plan()
 
 
-def reset_install_plan_defaults():
-    os.makedirs(talon_dir(), exist_ok=True)
-    save_install_plan(build_install_plan())
+def reset_install_plan_defaults(internet_available: bool = True):
+    save_install_plan(build_install_plan(internet_available=internet_available))
 
 
 def load_install_plan() -> dict:
-    ensure_install_plan_file()
     try:
-        with open(install_plan_path(), "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, dict):
-            raise ValueError("plan root must be an object")
-        if not isinstance(data.get("items", []), list):
-            data["items"] = []
-        original = json.dumps(data, sort_keys=True)
-        normalize_metadata_fields(data)
-        if json.dumps(data, sort_keys=True) != original:
-            save_install_plan(data)
-        return data
-    except Exception:
-        return build_install_plan()
+        return normalize_imported_plan(load_json_file(install_plan_path()))
+    except Exception as error:
+        raise InstallPlanError(f"Unable to load the saved install plan: {error}") from error
 
 
 def save_install_plan(data: dict):
-    os.makedirs(talon_dir(), exist_ok=True)
-    with open(install_plan_path(), "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    normalized = normalize_imported_plan(copy_metadata_value(data))
+    path = install_plan_path()
+    directory = os.path.dirname(path)
+    os.makedirs(directory, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory,
+                                         prefix=".install_plan-", suffix=".tmp", delete=False) as output:
+            temporary_path = output.name
+            json.dump(normalized, output, indent=2)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary_path, path)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                os.remove(temporary_path)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.warning("Unable to remove incomplete install plan file: %s", temporary_path, exc_info=True)
 
 
 def mark_custom(data: dict):
@@ -317,12 +315,11 @@ def is_item_enabled(data: dict, key: str) -> bool:
 
 def enabled_plan_keys(data: dict) -> list:
     keys = []
-    selected_browser = str(data.get("selected_browser_package", "")).strip()
     for item in data.get("items", []):
         n = normalize_item(item)
         if not n["key"] or not n["enabled"]:
             continue
-        if n["key"] == "browser-installation" and not selected_browser:
+        if step_unavailable_reason(n["key"], data):
             continue
         keys.append(n["key"])
     return keys
@@ -334,7 +331,7 @@ def visible_enabled_items(data: dict) -> list:
         n = normalize_item(item)
         if not n["enabled"]:
             continue
-        if n["key"] == "browser-installation" and not data.get("selected_browser_package", ""):
+        if step_unavailable_reason(n["key"], data):
             continue
         if n["key"] in set(step_catalog.BOOL_OPTION_SLUGS + step_catalog.STEP_SLUGS):
             if n["key"] == "browser-installation":
@@ -343,6 +340,13 @@ def visible_enabled_items(data: dict) -> list:
             else:
                 text = step_catalog.step_text(n["key"])
                 tooltip = step_catalog.step_tooltip(n["key"])
+                if n["key"] == "program-installation":
+                    text += ": " + ", ".join(data.get("chocolatey_packages", []))
+                elif n["key"] == "group-policy":
+                    tooltip += "\n" + "\n".join(
+                        f"{row['hive']}\\{row['key_path']}\\{row['name']} = {row['value']!r}"
+                        for row in data.get("group_policy_changes", [])
+                    )
         else:
             text = n["text"]
             tooltip = n["tooltip"]
@@ -350,7 +354,7 @@ def visible_enabled_items(data: dict) -> list:
     return out
 
 
-def set_browser(package_id: str, browser_name: str):
+def set_browser(package_id: str, browser_name: str, internet_available: bool = True):
     data = load_install_plan()
     items = [normalize_item(item) for item in data.get("items", [])]
     idx = find_item_index(items, "browser-installation")
@@ -360,15 +364,17 @@ def set_browser(package_id: str, browser_name: str):
     data["selected_browser_name"] = browser_name
     data["selected_browser_package"] = package_id
     data["include_browser_install"] = True
+    apply_step_availability(data, internet_available=internet_available)
     save_install_plan(data)
 
 
-def skip_browser_install():
+def skip_browser_install(internet_available: bool = True):
     data = load_install_plan()
     set_item_enabled(data, "browser-installation", False)
     data["selected_browser_name"] = "None"
     data["selected_browser_package"] = ""
     data["include_browser_install"] = False
+    apply_step_availability(data, internet_available=internet_available)
     save_install_plan(data)
 
 
@@ -376,12 +382,11 @@ def apply_internet_availability(available: bool):
     if available:
         return
     data = load_install_plan()
-    set_item_enabled_for_preset(data, "browser-installation", False)
-    data["include_browser_install"] = False
+    apply_step_availability(data, internet_available=False)
     save_install_plan(data)
 
 
-def apply_preset(preset_key: str):
+def apply_preset(preset_key: str, internet_available: bool = True):
     current = load_install_plan()
     selected_browser_name = str(current.get("selected_browser_name", "None"))
     selected_browser_package = str(current.get("selected_browser_package", ""))
@@ -391,6 +396,7 @@ def apply_preset(preset_key: str):
         browser_package=selected_browser_package,
         include_browser_install=bool(selected_browser_package),
         preset_key=str(preset.get("key", step_catalog.STANDARD_PRESET_KEY)),
+        internet_available=internet_available,
     )
     if not selected_browser_package:
         set_item_enabled_for_preset(data, "browser-installation", False)

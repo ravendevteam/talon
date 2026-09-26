@@ -6,15 +6,19 @@
   "selected_browser_name": "None",
   "selected_browser_package": "",
   "include_browser_install": false,
+  "chocolatey_packages": [],
+  "group_policy_changes": [],
   "items": [
     {"key": "developer-mode", "enabled": false},
     {"key": "remove-edge-permanently", "enabled": true},
     {"key": "uninstall-outlook-onedrive", "enabled": true},
     {"key": "browser-installation", "enabled": true},
+    {"key": "program-installation", "enabled": false},
     {"key": "debloat-windows-phase-one", "enabled": true},
     {"key": "debloat-windows-phase-two", "enabled": true},
     {"key": "registry-tweaks", "enabled": true},
     {"key": "configure-updates", "enabled": true},
+    {"key": "group-policy", "enabled": false},
     {"key": "apply-background", "enabled": true}
   ],
   "winutil_config": {
@@ -29,16 +33,12 @@
       "WPFTweaksDisableExplorerAutoDiscovery",
       "WPFTweaksDisplay",
       "WPFTweaksRightClickMenu",
-      "WPFTweaksRevertStartMenu",
       "WPFTweaksRemoveOneDrive",
-      "WPFTweaksXboxRemoval",
-      "WPFTweaksRemoveHome",
-      "WPFTweaksDeBloat",
       "WPFTweaksWindowsAI",
       "WPFTweaksDisableStoreSearch"
     ]
   },
-  "win11debloat_args": "-Silent -RemoveApps -RemoveGamingApps -DisableTelemetry -DisableBing -DisableSuggestions -DisableLockscreenTips -RevertContextMenu -TaskbarAlignLeft -HideSearchTb -DisableWidgets -DisableCopilot -ClearStartAllUsers -DisableDVR -DisableStartRecommended -ExplorerToThisPC -DisableMouseAcceleration -DisableDesktopSpotlight -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableEdgeAds -DisableBraveBloat -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSnapLayouts -DisableSearchHistory -DisableDeliveryOptimization",
+  "win11debloat_args": "-Silent -RemoveApps -RemoveGamingApps -DisableGameBarIntegration -DisableTelemetry -DisableBing -DisableStoreSearchSuggestions -DisableSuggestions -DisableLockscreenTips -RevertContextMenu -TaskbarAlignLeft -HideSearchTb -DisableWidgets -DisableCopilot -ClearStartAllUsers -DisableDVR -DisableStartRecommended -ExplorerToThisPC -HideHome -DisableMouseAcceleration -DisableDesktopSpotlight -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableEdgeAds -DisableBraveBloat -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSnapLayouts -DisableSearchHistory -DisableDeliveryOptimization",
   "registry_changes": null,
   "applied_background_path": ""
 }

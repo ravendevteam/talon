@@ -18,7 +18,7 @@
             "configure_updates": "Configurando políticas de Windows Update...",
             "apply_background": "Estableciendo el fondo de escritorio...",
             "dry_run_complete": "Ejecución de prueba completada. No se realizaron cambios en el sistema.",
-            "complete_no_restart": "Instalación completada. Talon no reiniciará el sistema automáticamente."
+            "complete_no_restart": "Instalación completada."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "La lista de la izquierda muestra todo lo que Talon hará en tu sistema. Si hay algo que no quieres que haga, puedes eliminar elementos de la lista.\n\nSi todo se ve bien, selecciona \"Iniciar\".",
             "no_browser_warning": "No se instalará ningún navegador.",
             "no_internet_info": "No estás conectado a internet. Talon no instalará un navegador.",
-            "no_updates_warning": "No se configurará la política de actualizaciones. Las actualizaciones podrían restaurar bloat y deshacer algunas configuraciones de Talon.",
             "nothing_to_do": "No se puede iniciar el proceso de eliminación de bloat. No hay nada que hacer.",
             "reset_defaults": "Restablecer valores predeterminados",
             "advanced": "Avanzado",
@@ -90,10 +89,6 @@
         "registry_tweaks": {
             "text": "Realizar ajustes visuales al escritorio",
             "tooltip": "Modifica el Registro de Windows para mejorar la apariencia y la experiencia del escritorio, incluyendo, entre otras cosas, alinear la barra de tareas a la izquierda, establecer el tema oscuro, eliminar retrasos en los menús y mostrar las extensiones de archivos."
-        },
-        "configure_updates": {
-            "text": "Establecer política de actualizaciones solo de seguridad",
-            "tooltip": "Para evitar que las actualizaciones de Windows reintroduzcan bloat y deshagan los cambios realizados, Talon establece una política de actualizaciones en tu sistema que permite recibir únicamente actualizaciones de seguridad, dejando fuera las actualizaciones de \"funciones\" no relacionadas con seguridad. Esta configuración es permanente en Windows Pro, pero solo dura 365 días en Windows Home."
         },
         "apply_background": {
             "text": "Aplicar fondo de escritorio",

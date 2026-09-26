@@ -18,7 +18,7 @@
             "configure_updates": "Windows Update policies को सेट किया जा रहा है...",
             "apply_background": "आपका desktop background सेट किया जा रहा है...",
             "dry_run_complete": "Dry run पूरा हुआ। सिस्टम में कोई बदलाव नहीं किया गया।",
-            "complete_no_restart": "इंस्टॉलेशन पूरा हुआ। Talon आपके सिस्टम को अपने आप रीस्टार्ट नहीं करेगा।"
+            "complete_no_restart": "इंस्टॉलेशन पूरा हुआ।"
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "बाईं ओर की सूची में वह सब कुछ दिखाया गया है जो Talon आपके सिस्टम पर करने वाला है। यदि कुछ ऐसा है जो आप नहीं चाहते कि वह करे, तो आप सूची से items हटा सकते हैं।\n\nअगर सब कुछ आपको ठीक लगता है, तो \"Start\" चुनें।",
             "no_browser_warning": "कोई browser इंस्टॉल नहीं किया जाएगा।",
             "no_internet_info": "आप internet से connected नहीं हैं। Talon browser इंस्टॉल नहीं करेगा।",
-            "no_updates_warning": "Update policy सेट नहीं की जाएगी। Updates bloat को restore कर सकते हैं और Talon की कुछ सेटिंग्स को undo कर सकते हैं।",
             "nothing_to_do": "Debloat प्रक्रिया शुरू नहीं की जा सकती। Nothing to do.",
             "reset_defaults": "Default पर reset करें",
             "advanced": "Advanced",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Desktop में visual बदलाव करें",
             "tooltip": "आपके desktop को बेहतर दिखाने और महसूस कराने के लिए Windows Registry को सुधार देता है, जिसमें आपके Taskbar को बाईं ओर संरेखित करना, आपकी theme को dark theme पर सेट करना, Menu में देरी हटाना और file extension दिखाना शामिल है।"
-        },
-        "configure_updates": {
-            "text": "Security-only update policy सेट करें",
-            "tooltip": "यह रोकने के लिए कि Windows Updates bloat को फिर से पेश न करें और किए गए बदलाव को undo न करें, Talon आपके सिस्टम पर एक update policy सेट करता है जिसके नतीजे के तौर पर केवल security update प्राप्त होते हैं, non-security \"feature\" update को छोड़कर। यह Windows Pro पर स्थायी रूप से रहता है, लेकिन Windows Home पर केवल 365 दिनों के लिए।"
         },
         "apply_background": {
             "text": "Desktop background लागू करें",

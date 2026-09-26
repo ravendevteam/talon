@@ -11,7 +11,7 @@ def is_admin() -> bool:
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
     except Exception as e:
-        logger.error(f"Admin check failed: {e}")
+        logger.exception(f"Admin check failed: {e}")
         return False
 
 
@@ -27,7 +27,7 @@ def run_as_admin():
     cwd = os.getcwd()
     logger.info(f"Elevating: {executable} {params}")
     try:
-        ctypes.windll.shell32.ShellExecuteW(
+        result = ctypes.windll.shell32.ShellExecuteW(
             None,
             "runas",
             executable,
@@ -35,6 +35,8 @@ def run_as_admin():
             cwd,
             1
         )
+        if result <= 32:
+            raise OSError(f"ShellExecuteW failed with code {result}")
     except Exception as e:
         logger.exception("Failed to relaunch with admin privileges")
         show_error_popup(t("errors.admin_elevation_failed", {"error": e}), allow_continue=False)
@@ -54,4 +56,4 @@ def ensure_admin():
 
 if __name__ == "__main__":
     ensure_admin()
-    print("Already running as admin.")
+    logger.info("Already running as admin.")

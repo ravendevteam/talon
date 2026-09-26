@@ -10,15 +10,19 @@ Rectangle {
 	property string mode: ""
 	property string titleText: ""
 	property string editorText: ""
+	property string helpKey: ""
 	property string interFontFamily: ""
 	property string monoFontFamily: ""
 	property var localizer
 	signal saveRequested(string mode, string text)
 
-	function openDialog(title, text, dialogMode) {
+	function openDialog(title, text, dialogMode, dialogHelpKey) {
 		titleText = title
 		editorText = text
 		mode = dialogMode
+		helpKey = dialogHelpKey || ""
+		advancedDialogEditor.text = editorText
+		editorFlick.contentY = 0
 		visible = true
 		advancedDialogEditor.forceActiveFocus()
 	}
@@ -104,8 +108,24 @@ Rectangle {
 			}
 		}
 
-		Rectangle {
+		Text {
+			id: editorHelp
 			anchors.top: bar.bottom
+			anchors.topMargin: root.helpKey ? 14 : 0
+			anchors.left: parent.left
+			anchors.right: parent.right
+			anchors.leftMargin: 14
+			anchors.rightMargin: 14
+			visible: root.helpKey.length > 0
+			text: root.helpKey ? root.localizer.text(root.helpKey) : ""
+			color: "#B0B0B0"
+			font.family: root.interFontFamily
+			font.pixelSize: 12
+			wrapMode: Text.WordWrap
+		}
+
+		Rectangle {
+			anchors.top: editorHelp.bottom
 			anchors.topMargin: 14
 			anchors.left: parent.left
 			anchors.right: parent.right
@@ -129,7 +149,7 @@ Rectangle {
 				TextEdit {
 					id: advancedDialogEditor
 					width: editorFlick.width
-					text: root.editorText
+					text: ""
 					color: "#FFFFFF"
 					font.family: root.monoFontFamily
 					font.pixelSize: 14

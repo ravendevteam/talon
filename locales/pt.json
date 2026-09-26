@@ -18,7 +18,7 @@
             "configure_updates": "Configurando políticas do Windows Update...",
             "apply_background": "Definindo seu plano de fundo da área de trabalho...",
             "dry_run_complete": "Execução de teste concluída. Nenhuma alteração foi feita no sistema.",
-            "complete_no_restart": "Instalação concluída. O Talon não reiniciará o sistema automaticamente."
+            "complete_no_restart": "Instalação concluída."
         }
     },
     "configuration": {
@@ -32,7 +32,6 @@
             "guidance": "A lista à esquerda mostra tudo o que o Talon fará no seu sistema. Se houver algo que você não queira que ele faça, você pode remover itens da lista.\n\nSe tudo estiver correto, selecione \"START\".",
             "no_browser_warning": "Nenhum navegador será instalado.",
             "no_internet_info": "Você não está conectado à internet. O Talon não instalará um navegador.",
-            "no_updates_warning": "A política de atualização não será configurada. Atualizações podem restaurar bloat e desfazer algumas configurações do Talon.",
             "nothing_to_do": "Não é possível iniciar o processo de debloat. Nada a fazer.",
             "reset_defaults": "Restaurar padrões",
             "advanced": "Avançado",
@@ -91,10 +90,6 @@
         "registry_tweaks": {
             "text": "Fazer ajustes visuais na área de trabalho",
             "tooltip": "Modifica o Registro do Windows para melhorar a aparência e a experiência da área de trabalho, incluindo, mas não se limitando a, alinhar a barra de tarefas à esquerda, definir o tema escuro, remover atrasos em menus e mostrar extensões de arquivos."
-        },
-        "configure_updates": {
-            "text": "Definir política de atualizações somente de segurança",
-            "tooltip": "Para evitar que atualizações do Windows reintroduzam bloat e desfaçam as alterações feitas, o Talon define uma política de atualização no sistema que permite receber apenas atualizações de segurança, excluindo atualizações de \"recursos\" não relacionadas à segurança. Isso permanece permanentemente no Windows Pro, mas apenas por 365 dias no Windows Home."
         },
         "apply_background": {
             "text": "Aplicar plano de fundo da área de trabalho",

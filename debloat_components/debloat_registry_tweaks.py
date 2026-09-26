@@ -1,3 +1,4 @@
+import json
 import sys
 import winreg
 from utilities.util_logger import logger
@@ -19,15 +20,18 @@ REGISTRY_MODIFICATIONS = [
     (winreg.HKEY_CURRENT_USER,
      r"Software\Microsoft\Windows\CurrentVersion\GameDVR",
      "AppCaptureEnabled", winreg.REG_DWORD, 0),
+    (winreg.HKEY_CURRENT_USER,
+     r"System\GameConfigStore",
+     "GameDVR_Enabled", winreg.REG_DWORD, 0),
     (winreg.HKEY_LOCAL_MACHINE,
-     r"SOFTWARE\Microsoft\PolicyManager\default\ApplicationManagement\AllowGameDVR",
-     "Value", winreg.REG_DWORD, 0),
+     r"SOFTWARE\Policies\Microsoft\Windows\GameDVR",
+     "AllowGameDVR", winreg.REG_DWORD, 0),
     (winreg.HKEY_CURRENT_USER,
      r"Control Panel\Desktop",
      "MenuShowDelay", winreg.REG_SZ, "0"),
     (winreg.HKEY_CURRENT_USER,
      r"Control Panel\Desktop\WindowMetrics",
-     "MinAnimate", winreg.REG_DWORD, 0),
+     "MinAnimate", winreg.REG_SZ, "0"),
     (winreg.HKEY_CURRENT_USER,
      r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
      "ExtendedUIHoverTime", winreg.REG_DWORD, 1),
@@ -70,10 +74,11 @@ def _parse_hive(value):
         "HKEY_LOCAL_MACHINE": winreg.HKEY_LOCAL_MACHINE,
         "HKLM": winreg.HKEY_LOCAL_MACHINE,
     }
-    if isinstance(value, int):
-        return value
-    text = str(value).strip().upper()
-    return hive_names.get(text)
+    if type(value) is int:
+        return value if value in hive_names.values() else None
+    if isinstance(value, str):
+        return hive_names.get(value.strip().upper())
+    return None
 
 
 def _parse_value_type(value):
@@ -83,43 +88,81 @@ def _parse_value_type(value):
         "REG_SZ": winreg.REG_SZ,
         "SZ": winreg.REG_SZ,
     }
-    if isinstance(value, int):
-        return value
-    text = str(value).strip().upper()
-    return type_names.get(text)
+    if type(value) is int:
+        return value if value in type_names.values() else None
+    if isinstance(value, str):
+        return type_names.get(value.strip().upper())
+    return None
 
 
-def _coerce_registry_modifications(registry_changes):
+def normalize_registry_changes(registry_changes):
     if registry_changes is None:
-        return list(REGISTRY_MODIFICATIONS)
+        registry_changes = default_registry_changes_payload()
+    if isinstance(registry_changes, str):
+        try:
+            registry_changes = json.loads(registry_changes)
+        except (ValueError, TypeError) as error:
+            raise ValueError(f"registry_changes contains invalid JSON: {error}") from error
     if isinstance(registry_changes, dict):
-        if isinstance(registry_changes.get("modifications"), list):
-            rows = registry_changes.get("modifications")
-        elif isinstance(registry_changes.get("items"), list):
-            rows = registry_changes.get("items")
-        else:
+        if set(registry_changes) not in ({"modifications"}, {"items"}):
+            raise ValueError("registry_changes must contain only 'modifications' or 'items'.")
+        rows = next(iter(registry_changes.values()))
+        if not isinstance(rows, list):
             raise ValueError("registry_changes must contain a list in 'modifications' or 'items'.")
     elif isinstance(registry_changes, list):
         rows = registry_changes
     else:
         raise ValueError("registry_changes must be a list or object.")
-    if not rows:
-        raise ValueError("registry_changes is empty.")
+
+    required_fields = {"hive", "key_path", "name", "value_type", "value"}
+    root_names = {"HKCU", "HKEY_CURRENT_USER", "HKLM", "HKEY_LOCAL_MACHINE",
+                  "HKCR", "HKEY_CLASSES_ROOT", "HKU", "HKEY_USERS", "HKCC", "HKEY_CURRENT_CONFIG"}
     out = []
     for idx, raw in enumerate(rows):
-        if not isinstance(raw, dict):
-            raise ValueError(f"registry_changes[{idx}] must be an object.")
-        hive = _parse_hive(raw.get("hive"))
-        key_path = str(raw.get("key_path", "")).strip()
-        name = str(raw.get("name", "")).strip()
-        value_type = _parse_value_type(raw.get("value_type"))
-        value = raw.get("value")
-        if hive is None or not key_path or not name or value_type is None:
+        label = f"registry_changes[{idx}]"
+        if not isinstance(raw, dict) or set(raw) != required_fields:
             raise ValueError(
-                f"registry_changes[{idx}] must include valid hive, key_path, name, and value_type."
+                f"{label} must contain exactly hive, key_path, name, value_type, and value."
             )
-        out.append((hive, key_path, name, value_type, value))
+        hive = _parse_hive(raw["hive"])
+        value_type = _parse_value_type(raw["value_type"])
+        if hive is None:
+            raise ValueError(f"{label}: hive must be HKLM or HKCU.")
+        if not isinstance(raw["key_path"], str) or not isinstance(raw["name"], str):
+            raise ValueError(f"{label}: key_path and name must be strings.")
+        key_path, name = raw["key_path"].strip(), raw["name"].strip()
+        segments = key_path.split("\\")
+        if (not key_path or len(key_path) > 255 or any(ord(c) < 32 for c in key_path)
+                or "/" in key_path or any(part.strip() in ("", ".", "..") for part in segments)
+                or segments[0].upper().rstrip(":") in root_names):
+            raise ValueError(f"{label}: key_path must be a valid path relative to the selected hive.")
+        if not name or len(name) > 16383 or any(ord(c) < 32 for c in name):
+            raise ValueError(f"{label}: name must be a nonempty registry value name.")
+        value = raw["value"]
+        if value_type == winreg.REG_DWORD:
+            if type(value) is not int or not 0 <= value <= 0xFFFFFFFF:
+                raise ValueError(f"{label}: REG_DWORD value must be an integer from 0 to 4294967295.")
+        elif value_type == winreg.REG_SZ:
+            if not isinstance(value, str) or "\0" in value:
+                raise ValueError(f"{label}: REG_SZ value must be a string without null characters.")
+        else:
+            raise ValueError(f"{label}: value_type must be REG_DWORD or REG_SZ.")
+        out.append({
+            "hive": "HKEY_CURRENT_USER" if hive == winreg.HKEY_CURRENT_USER else "HKEY_LOCAL_MACHINE",
+            "key_path": key_path,
+            "name": name,
+            "value_type": "REG_DWORD" if value_type == winreg.REG_DWORD else "REG_SZ",
+            "value": value,
+        })
     return out
+
+
+def _coerce_registry_modifications(registry_changes):
+    rows = normalize_registry_changes(registry_changes)
+    if not rows:
+        raise ValueError("registry_changes is empty.")
+    return [(_parse_hive(row["hive"]), row["key_path"], row["name"],
+             _parse_value_type(row["value_type"]), row["value"]) for row in rows]
 
 
 
@@ -134,8 +177,9 @@ def main(registry_changes=None):
                 allow_continue=False
             )
         except Exception:
-            pass
+            logger.exception("Failed to report installation error")
         sys.exit(1)
+    failures = 0
     for hive, key_path, name, value_type, value in modifications:
         try:
             logger.info(f"Applying registry tweak: {key_path}\\{name} = {value!r} (type={value_type})")
@@ -143,16 +187,16 @@ def main(registry_changes=None):
             logger.info(f"Successfully set {name}")
         except Exception as e:
             logger.error(f"Failed to apply registry tweak {name}: {e}")
-            try:
-                show_error_popup(
-                    t("errors.registry_tweak_failed", {"target": f"{key_path}\\{name}", "error": e}),
-                    allow_continue=False
-                )
-            except Exception:
-                pass
-            sys.exit(1)
+            show_error_popup(
+                t("errors.registry_tweak_failed", {"target": f"{key_path}\\{name}", "error": e}),
+                allow_continue=True
+            )
+            failures += 1
 
-    logger.info("All registry tweaks applied successfully.")
+    if failures:
+        logger.warning("Registry tweaks completed with %s failed changes.", failures)
+    else:
+        logger.info("All registry tweaks applied successfully.")
 
 
 

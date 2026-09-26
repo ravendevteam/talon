@@ -6,7 +6,11 @@
   "selected_browser_name": "None",
   "selected_browser_package": "",
   "include_browser_install": false,
+  "chocolatey_packages": [],
+  "group_policy_changes": [],
   "items": [
+    {"key": "program-installation", "enabled": false},
+    {"key": "group-policy", "enabled": false},
     {
       "key": "developer-mode",
       "text": "",
@@ -71,15 +75,12 @@
       "WPFTweaksWPBT",
       "WPFTweaksServices",
       "WPFTweaksDisableExplorerAutoDiscovery",
-      "WPFTweaksDisplay",
       "WPFTweaksRemoveOneDrive",
-      "WPFTweaksXboxRemoval",
-      "WPFTweaksDeBloat",
       "WPFTweaksWindowsAI",
       "WPFTweaksDisableStoreSearch"
     ]
   },
-  "win11debloat_args": "-Silent -RemoveApps -RemoveGamingApps -DisableTelemetry -DisableBing -DisableWidgets -DisableCopilot -DisableDVR -DisableMouseAcceleration -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableEdgeAds -DisableBraveBloat -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSearchHistory -DisableDeliveryOptimization",
+  "win11debloat_args": "-Silent -RemoveApps -RemoveGamingApps -DisableGameBarIntegration -DisableTelemetry -DisableBing -DisableStoreSearchSuggestions -DisableWidgets -DisableCopilot -DisableDVR -DisableMouseAcceleration -DisableSettings365Ads -DisableSettingsHome -DisablePaintAI -DisableNotepadAI -DisableEdgeAI -DisableStickyKeys -DisableEdgeAds -DisableBraveBloat -DisableRecall -DisableAISvcAutoStart -DisableClickToDo -DisableSearchHistory -DisableDeliveryOptimization",
   "registry_changes": [
     {
       "hive": "HKEY_CURRENT_USER",
@@ -90,8 +91,8 @@
     },
     {
       "hive": "HKEY_LOCAL_MACHINE",
-      "key_path": "SOFTWARE\\Microsoft\\PolicyManager\\default\\ApplicationManagement\\AllowGameDVR",
-      "name": "Value",
+      "key_path": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+      "name": "AllowGameDVR",
       "value_type": "REG_DWORD",
       "value": 0
     },
@@ -106,8 +107,8 @@
       "hive": "HKEY_CURRENT_USER",
       "key_path": "Control Panel\\Desktop\\WindowMetrics",
       "name": "MinAnimate",
-      "value_type": "REG_DWORD",
-      "value": 0
+      "value_type": "REG_SZ",
+      "value": "0"
     },
     {
       "hive": "HKEY_CURRENT_USER",
